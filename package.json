@@ -1,0 +1,21 @@
+{
+  "name": "erp-multim",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@zeit/next-less": "^1.0.1",
+    "bwip-js": "^2.0.6",
+    "jspdf": "^1.5.3",
+    "jwt-decode": "^2.2.0",
+    "less": "^3.11.1",
+    "next": "9.3.2",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "rsuite": "^4.3.3"
+  }
+}

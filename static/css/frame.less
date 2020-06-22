@@ -1,0 +1,78 @@
+@import '~rsuite/lib/styles/index.less';
+// @import '../HeaderAvatar/styles.less';
+
+//rewrite base color
+@base-color: #3498ff;
+@sidebar-color: #142E40;
+
+body {
+  background: #f7f7fa;
+}
+
+.rs-sidebar {
+  position: fixed;
+  height: 100vh;
+}
+.page-container {
+  padding-left: 260px;
+  transition: padding 0.5s;
+  &.container-full {
+    padding-left: 60px;
+  }
+}
+
+.frame {
+  height: 100vh;
+  .header-hrand {
+    padding: 18px;
+    font-size: 16px;
+    height: 56px;
+    background: @sidebar-color;
+    white-space: nowrap;
+    overflow: hidden;
+    a {
+      color: #fff;
+      text-decoration: none;
+    }
+  }
+  .rs-sidebar {
+    box-shadow: @default-box-shadow;
+  }
+//  sidebar footer dont move to the top
+  .rs-sidenav {
+    flex: 1 1 auto;
+    transition: none !important;
+    border-top: 1px solid @B200;
+    width: 100%;
+    background-color: @sidebar-color;
+    a {
+      color: #fff;
+      text-decoration: none;
+    }
+  }
+
+  .rs-content {
+    padding: 20px;
+  }
+  .nav-toggle {
+    border-top: 1px solid #eee;
+    background-color: @sidebar-color;
+    i.rs-icon {
+      color: white;
+    }
+  }
+
+  .nav-item-active {
+    color: @H500 !important;
+  }
+
+  li.rs-nav-item.rs-nav-item-active {
+    background-color: white;
+    font-weight: bold;
+    //border-radius: 30px;
+    //margin: 10px;
+    i.rs-icon {
+      color: #FECB08;
+  }
+  }
+}

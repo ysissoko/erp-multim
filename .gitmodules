@@ -1,0 +1,3 @@
+[submodule "multim-backend-services"]
+	path = multim-backend-services
+	url = https://github.com/ysissoko/multim-backend-services.git

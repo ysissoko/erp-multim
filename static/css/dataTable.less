@@ -1,0 +1,61 @@
+.table-toolbar {
+  padding: 20px;
+  background: #fff;
+  border-radius: 4px 4px 0 0;
+  &::before,
+  &::after {
+    content: ' ';
+    display: table;
+  }
+  &::after {
+    clear: both;
+  }
+  .inner-left {
+    float: left;
+  }
+  .inner-right {
+    float: right;
+  }
+}
+
+.rs-drawer-footer {
+  text-align: left;
+}
+
+.rs-table {
+  background: #fff;
+}
+
+
+.title {
+  font-weight: normal;
+  //font-size: 18px;
+}
+
+.subtitle {
+  font-weight: lighter;
+  //font-size: 18px;
+}
+
+// button.rs-btn.rs-btn-ghost {
+//   border-radius: 30px;
+// }
+
+.header-frame {
+  margin-left: 20px;
+}
+
+.date {
+  background: #fff;
+  padding: 20px;
+  padding-top: unset;
+  margin-top: -25px;
+  font-weight: lighter;
+}
+
+input.rs-input.edit-cell {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 90%;
+}
