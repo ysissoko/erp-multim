@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import LoginForm from '../erp/loginForm';
-import '../../static/css/LandingPage.less';
+import '../../static/css/landingPage.less';
 
 class LandingPage extends Component {
 
