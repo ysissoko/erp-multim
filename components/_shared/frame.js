@@ -58,7 +58,7 @@ const NavToggle = ({ expand, onChange }) => {
     return (
       <Navbar appearance="subtle" className="nav-toggle">
         <Navbar.Body>
-          <Nav>
+          {/* <Nav>
             <Dropdown
               placement={expand ? "topStart" : "rightEnd"}
               trigger="click"
@@ -69,7 +69,7 @@ const NavToggle = ({ expand, onChange }) => {
               <Dropdown.Item>Settings</Dropdown.Item>
               <Dropdown.Item>Sign out</Dropdown.Item>
             </Dropdown>
-          </Nav>
+          </Nav> */}
   
           <Nav pullRight>
             <Nav.Item onClick={onChange} style={styles.navItem}>
