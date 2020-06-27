@@ -196,6 +196,12 @@ class Entrepot extends React.Component {
     this.deleteMultipleEntities(this.placeService, this.refreshPlacesList.bind(this));
   }
 
+  deleteSelectedProducts()
+  {
+    console.log("delete selected products");
+    this.deleteMultipleEntities(this.productService, this.refreshCatalog.bind(this));
+  }
+
   // ******************** MODALS ***********************
 
   handleConfirm()
@@ -214,6 +220,10 @@ class Entrepot extends React.Component {
 
       // cartons out stock
       case 3: this.deleteSelectedProviders()
+      break;
+
+      // products
+      case 4: this.deleteSelectedProducts()
       break;
     }
   }
