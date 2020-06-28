@@ -282,9 +282,9 @@ class Stock extends React.Component {
         cartonOut: carton.refCode,
         operation:  carton.scanned ? carton.whOutOp.refCode : "",
         statut: carton.scanned ? "enregistré": "à scanner",
-        quantity: this.getProductsQuantity(carton.productsInStock),
+        quantity: this.getProductsQuantity(carton.productsOutClassic),
+        products: carton.productsOutClassic.map((productOutClassic) => ({product: productOutClassic.productOutStock.product.refCode, quantity: productOutClassic.quantity}))
         //whOutOp: carton.whOutOp,
-        //products: carton.productsInStock.map((productInStock) => ({product: productInStock.product.refCode, quantity: productInStock.quantity}))
       }))
       }));
     }, error => Alert.warning(error.message, 2000))
@@ -915,7 +915,7 @@ nextPage = (data) => {
                     //onFilter={}
                   />
                   <DataTable
-                    //data={this.state.selectedCarton.products}
+                    data={this.state.selectedCarton.products}
                     //column
                     column={columnCartonProduct}
                     sortColumn={this.state.sortColumn}

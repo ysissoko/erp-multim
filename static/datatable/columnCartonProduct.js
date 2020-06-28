@@ -20,7 +20,7 @@ export default [
     },
     {
         key: 4,
-        text: "Qté en Stock",
+        text: "Quantité",
         datakey: "quantity",
         width: 150,
         sortable: true,
