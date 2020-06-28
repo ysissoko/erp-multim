@@ -47,6 +47,7 @@ const DataTable = ({
             onSortColumn={onSortColumn}
             loading={loading}
             onRowClick={onDetails}
+            loading={loading}
         >
             {column.map((c) => {
                 return ( 
