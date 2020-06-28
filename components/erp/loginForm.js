@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Form, FormGroup, FormControl, ControlLabel, ButtonToolbar, Button, Schema  } from 'rsuite';
+import { Form, FormGroup, FormControl, ControlLabel, ButtonToolbar, Button, Schema, Alert  } from 'rsuite';
 import Router from 'next/router';
 import {AuthService} from '../../services/main.bundle';
 
@@ -45,7 +45,10 @@ class LoginForm extends Component {
                           localStorage.setItem("access_token", result.data.access_token);
                           Router.push("/operation");
                         }).catch(e => {
-                          console.log(e);
+                          if(e.response.data.statusCode === 401)
+                            Alert.error("Identifiants incorrect", 5000);
+                          else
+                            Alert.error("Erreur de connexion au serveur", 5000);
                         })
     }
 
