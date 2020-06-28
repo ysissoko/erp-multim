@@ -217,11 +217,15 @@ class Stock extends React.Component {
   }
 
   refreshProductInStock()
-  {
+  { 
+    this.setState({
+      loading: true
+    });
     this.productInService.readAll()
     .then((response) => {
-      console.log(response)
-      this.setState((prevState) => ({...prevState, productList: response.data.map((productIn) => ({
+      this.setState((prevState) => ({...prevState,
+        loading: false,
+        productList: response.data.map((productIn) => ({
         id: productIn.id,
         product: productIn.product.name,
         quantity: productIn.quantity,
@@ -236,17 +240,23 @@ class Stock extends React.Component {
 
   refreshWhMovOps()
   {
+    this.setState({
+      loading: true
+    });
     this.whMovOpService.readAll()
     .then((response) => {
-      this.setState((prevState) => ({...prevState, cartonMoveHistory: response.data.map((move) => ({ id: move.id, operation: move.refCode, carton: move.carton.refCode, initial: move.oldPlace.refCode, current: move.newPlace.refCode, lastUpdate: getFormattedDate(move.updatedAt)}))}));
+      this.setState((prevState) => ({...prevState, loading: false, cartonMoveHistory: response.data.map((move) => ({ id: move.id, operation: move.refCode, carton: move.carton.refCode, initial: move.oldPlace.refCode, current: move.newPlace.refCode, lastUpdate: getFormattedDate(move.updatedAt)}))}));
     }, error => Alert.warning(error.message, 2000));
   }
 
   refreshCartonInStock()
   {
+    this.setState({
+      loading: true
+    });
     this.cartonInService.readAll()
     .then((response) => {
-      this.setState((prevState) => ({...prevState, cartonsList: response.data.map((carton) => ({
+      this.setState((prevState) => ({...prevState, loading: false, cartonsList: response.data.map((carton) => ({
           id: carton.id,
           carton: carton.refCode,
           statut: carton.scanned ? "enregistré": "à scanner",
@@ -262,10 +272,13 @@ class Stock extends React.Component {
 
   refreshCartonOutStock()
   {
+    this.setState({
+      loading: true
+    });
     this.cartonOutService.readAll()
     .then((response) => {
       console.log(response)
-      this.setState((prevState) => ({...prevState, cartonsOutList: response.data.map((carton) => ({
+      this.setState((prevState) => ({...prevState, loading: false, cartonsOutList: response.data.map((carton) => ({
         id: carton.id,
         cartonOut: carton.refCode,
         operation:  carton.scanned ? carton.whOutOp.refCode : "",

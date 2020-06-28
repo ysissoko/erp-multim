@@ -285,8 +285,12 @@ class Operation extends Component {
 
   refreshWhInList()
   {
+    this.setState({
+      loading: true
+    });
     this.whInOpService.readAll().then((response) => {
       this.setState((prevState) => ({...prevState,
+        loading: false,
         rawReceiptList: response.data,
         receiptList: response.data.map(receipt => ({id: receipt.id,
           statut: getTagByReceiptStatus(receipt.status),
@@ -301,8 +305,12 @@ class Operation extends Component {
 
   refreshWhOutList()
   {
+    this.setState({
+      loading: true
+    });
     this.whOutService.readAll().then((response) => {
       this.setState((prevState) => ({...prevState,
+        loading: false,
         rawDeliveryList: response.data,
         deliveriesList: response.data.map(delivery => ({
           id: delivery.id,
@@ -888,6 +896,8 @@ class Operation extends Component {
                     onAutocompleteInputChange={this.onWhInAutocompleteInputChange}
                   />
                 <DataTable
+                  //loading data
+                  loading={this.state.loading}
                   data={this.sortData(this.nextPage(receiptList))}
                   onRowClick={this.handleAction}
                   onDetails={this.onReceiptDetailsSelect}

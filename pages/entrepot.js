@@ -106,26 +106,35 @@ class Entrepot extends React.Component {
 
   refreshCatalog()
   {
+    this.setState({
+      loading: true
+    });
     this.productService.readAll().then((response) => {
-      this.setState((prevState) => ({...prevState, checkedKeys: [], productList: response.data.map((product) => ({ id: product.id, product: product.name, refCode: product.refCode, barcode: product.eanCode, brand: product.brand.name}))}));
+      this.setState((prevState) => ({...prevState, loading: false, checkedKeys: [], productList: response.data.map((product) => ({ id: product.id, product: product.name, refCode: product.refCode, barcode: product.eanCode, brand: product.brand.name}))}));
     }, error => Alert.warning(error.message, 2000));
   }
 
   refreshBrandsList()
   {
+    this.setState({
+      loading: true
+    });
     this.brandService.readAll("join=products").then((response) => {
       console.log(response.data);
       // Convert the successfully retrieved data and convert the array to be 'datable compliant'
-      this.setState((prevState) => ({...prevState, checkedKeys: [], brandList: response.data.map((brand) => ({ id: brand.id, marque: brand.name, product: brand.products.length}))}));
+      this.setState((prevState) => ({...prevState, loading: false, checkedKeys: [], brandList: response.data.map((brand) => ({ id: brand.id, marque: brand.name, product: brand.products.length}))}));
     }, (error) => Alert.warning(error.message, 2000));
   }
 
   refreshPlacesList()
   {
+    this.setState({
+      loading: true
+    });
     this.placeService.readAll().then((response) => {
       console.log(response.data);
       // Convert the successfully retrieved data and convert the array to be 'datable compliant'
-      this.setState((prevState) => ({...prevState, checkedKeys: [], placeList: response.data.map((place) => ({ id: place.id, place: place.refCode}))}));
+      this.setState((prevState) => ({...prevState, loading: false, checkedKeys: [], placeList: response.data.map((place) => ({ id: place.id, place: place.refCode}))}));
     }, (error) => Alert.warning(error.message, 2000));
   }
 
