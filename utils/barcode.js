@@ -15,13 +15,20 @@ function exportBarcodesToPdf(barcodesImages)
 {
   var doc = new jsPDF({unit: 'px', orientation: 'p'})
 
+  let pageCount = 0;
+
   barcodesImages.forEach((barcodeImg, i) => {
-    console.log(barcodeImg.height)
-    let y = (i%BARCODE_PER_PAGE) * barcodeImg.height;
+    if (i>0 && i%BARCODE_PER_PAGE === 0) {
+      doc.addPage();
+      pageCount++;
+    }
+    let y = (i%BARCODE_PER_PAGE) * barcodeImg.img.height;
 
-    if (i>0 && i%BARCODE_PER_PAGE === 0) doc.addPage();
+    console.log(y)
+    if (barcodeImg.additionnalTxt)
+      doc.text(barcodeImg.additionnalTxt, 5, y + 10)
 
-    doc.addImage({imageData: barcodeImg, format: "PNG", x: 0, y: y})
+    doc.addImage({imageData: barcodeImg.img, format: "PNG", x: 5, y: y+15})
   });
 
   doc.save('barcodes.pdf')
@@ -31,9 +38,10 @@ export function generateBarcodesPdf(dataArr)
 {
   let barcodesImages = [];
 
-  let canvas = document.createElement('canvas');
   dataArr.forEach((data) => {
     try {
+      let canvas = document.createElement('canvas');
+
       // The return value is the canvas element
       let barcodeCanvas = bwipjs.toCanvas(canvas, {
               bcid:        'code128',       // Barcode type
@@ -46,7 +54,7 @@ export function generateBarcodesPdf(dataArr)
 
         var barcodeImg = new Image(barcodeCanvas.width, barcodeCanvas.height);
         barcodeImg.src = barcodeCanvas.toDataURL('image/png')
-        barcodesImages.push(barcodeImg);
+        barcodesImages.push({img: barcodeImg, additionnalTxt: data.additionnalTxt});
     } catch (e) {
         // `e` may be a string or Error object
         console.log(e)

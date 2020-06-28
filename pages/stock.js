@@ -126,6 +126,22 @@ class Stock extends React.Component {
     });
   }
 
+  exportProductInBarcodes()
+  {
+    const {checkedKeys} = this.state;
+    let barcodes = [];
+
+    for (let key of checkedKeys)
+    {
+      const product = this.state.productList.find(product => product.id === key);
+      console.log(product)
+      barcodes.push({toBarcode: product.barcode, additionnalTxt: product.code});
+    }
+
+    if (barcodes.length > 0)
+      generateBarcodesPdf(barcodes);
+  }
+
   handleConfirm()
   {
     console.log("Handle confirm");
@@ -621,15 +637,16 @@ nextPage = (data) => {
                       subtitle={"Visualiser les produits ici, pour en ajouter d’autre, rendez-vous dans Entrepôt > Catalogue."}
                     />
                    {(indeterminate || checked) && (
+                    <>
                     <IconButton
                       style={{marginTop: '20px', marginRight:'5px'}}
                       className="inner-right"
-                      color="red"
-                      icon={<Icon icon="trash-o" />}
+                      color="yellow"
+                      icon={<Icon icon="qrcode" />}
                       appearance="primary"
-                      onClick={() => this.openModal('delete')}
+                      onClick={() => this.exportProductInBarcodes()}
                     />
-                  )}
+                    </>)}
                 </div>
                 <CustomFilter
                   //needFilter={false}

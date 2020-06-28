@@ -8,7 +8,7 @@ export default [
         width: 50,
         sortable: false,
         resizable: false,
-        disabled: true
+        disabled: false
     },
     {
         key: 2,
@@ -66,4 +66,4 @@ export default [
         sortable: true,
         resizable: true
     }
-];  
+];
