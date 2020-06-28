@@ -15,18 +15,19 @@ function exportBarcodesToPdf(barcodesImages)
 {
   var doc = new jsPDF({unit: 'px', orientation: 'p'})
 
-  let pageCount = 0;
+  // Font size and type for additionnal text above barcode
+  doc.setFontType("bold");
+  doc.setFontSize(9);
 
   barcodesImages.forEach((barcodeImg, i) => {
     if (i>0 && i%BARCODE_PER_PAGE === 0) {
       doc.addPage();
-      pageCount++;
     }
     let y = (i%BARCODE_PER_PAGE) * barcodeImg.img.height;
 
     console.log(y)
     if (barcodeImg.additionnalTxt)
-      doc.text(barcodeImg.additionnalTxt, 5, y + 10)
+      doc.text(barcodeImg.additionnalTxt, 5, y + 5)
 
     doc.addImage({imageData: barcodeImg.img, format: "PNG", x: 5, y: y+15})
   });

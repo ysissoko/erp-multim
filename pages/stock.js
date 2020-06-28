@@ -134,8 +134,7 @@ class Stock extends React.Component {
     for (let key of checkedKeys)
     {
       const product = this.state.productList.find(product => product.id === key);
-      console.log(product)
-      barcodes.push({toBarcode: product.barcode, additionnalTxt: product.code});
+      barcodes.push({toBarcode: product.barcode, additionnalTxt: [product.code, product.product /** product name */]});
     }
 
     if (barcodes.length > 0)
@@ -217,7 +216,7 @@ class Stock extends React.Component {
   }
 
   refreshProductInStock()
-  { 
+  {
     this.setState({
       loading: true
     });
