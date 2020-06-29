@@ -52,6 +52,7 @@ class Entrepot extends React.Component {
       editing: false,
       moreActions: false,
       activeButton: false, //active button when input not null
+      placesExcelFile: null,
       active: 1,
       entrepotNavbar,
       placeList: [],
@@ -81,6 +82,7 @@ class Entrepot extends React.Component {
     this.handlePlaceInputValueChange = this.handlePlaceInputValueChange.bind(this);
     this.handleProviderInputChange = this.handleProviderInputChange.bind(this);
     this.handleUploadCatalogExcelFile = this.handleUploadCatalogExcelFile.bind(this);
+    this.handlePlacesUploadExcelFile = this.handlePlacesUploadExcelFile.bind(this);
     this.handlePrintPlacesBarcodesBtnClick = this.handlePrintPlacesBarcodesBtnClick.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
 
@@ -253,6 +255,23 @@ class Entrepot extends React.Component {
     }
   }
 
+  handlePlacesUploadExcelFile(value)
+  {
+    console.log(value);
+    this.setState((prevState) => ({...prevState, placesExcelFile: value, activeButton: true}))
+
+    //control if input null, disabled the button
+    if(value === '') {
+      this.setState({
+        activeButton: false
+      })
+    } else {
+      this.setState({
+        activeButton: true
+      })
+    }
+  }
+
   handleBrandInputValueChange(value)
   {
     this.setState((prevState) => ({...prevState, brandModalInputValue: value}))
@@ -327,6 +346,9 @@ class Entrepot extends React.Component {
       case 'place':
         this.createPlace();
         break;
+      case 'places':
+          this.importExcelPlaces();
+          break;
       case 'marque' :
         this.createBrand();
         break;
@@ -342,7 +364,7 @@ class Entrepot extends React.Component {
   closeModal(type) {
     switch (type) {
       case 'place' :
-        this.setState({place: this.state.show, activeButton: false});
+        this.setState({place: this.state.show, placesExcelFile: null, activeButton: false});
         break;
       case 'marque' :
         this.setState({marque: this.state.show, activeButton: false});
@@ -351,7 +373,7 @@ class Entrepot extends React.Component {
         this.setState({fournisseur: this.state.show, activeButton: false});
         break;
       case 'catalogue' :
-        this.setState({catalogue: this.state.show, activeButton: false});
+        this.setState({catalogue: this.state.show, catalogExcelFile: null, activeButton: false});
         break;
       case 'delete' :
         this.setState({delete: this.state.show});
@@ -525,6 +547,14 @@ class Entrepot extends React.Component {
     this.productService.importExcelFile(this.state.catalogExcelFile.blobFile).then((products) => {
       this.refreshCatalog();
       this.closeModal("catalogue");
+    }, error => Alert.error(error.message, 5000));
+  }
+
+  importExcelPlaces(){
+    console.log(this.state.placesExcelFile.blobFile);
+    this.placeService.importExcelFile(this.state.placesExcelFile.blobFile).then((places) => {
+      this.refreshPlacesList();
+      this.closeModal("place");
     }, error => Alert.error(error.message, 5000));
   }
 
@@ -962,11 +992,18 @@ class Entrepot extends React.Component {
                   <Modal show={this.state.place} onHide={() => this.closeModal('place')} size="xs" backdrop="static">
                     <PlaceModal
                       text="J'importe mon fichier excel"
+                      handleUploadExcelFile={this.handlePlacesUploadExcelFile}
                       placeholder="A101"
                       secondaryButton="Annuler"
                       primaryButton="Créer le(s) Emplacement(s)"
                       onInputChange={this.handlePlaceInputValueChange}
-                      validateModal= {() => this.validateModal('place')}
+                      validateModal= {() => {
+                        // Import excel file or create manually
+                        if(this.state.placesExcelFile)
+                          this.validateModal('places')
+                        else
+                          this.validateModal("place")
+                      }}
                       closeModal={() => this.closeModal('place')}
                       disabled={!this.state.activeButton}
                     />
