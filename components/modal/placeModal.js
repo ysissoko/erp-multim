@@ -18,7 +18,7 @@ function TextField(props) {
   );
 }
 
-const placeModal = ({ closeModal, placeholder, secondaryButton, primaryButton, onInputChange, validateModal, disabled }) => (
+const placeModal = ({ closeModal, placeholder, secondaryButton, primaryButton, onInputChange, validateModal, disabled, handleUploadExcelFile }) => (
     <>
     <Form model={model}>
     <Modal.Header>
@@ -33,7 +33,7 @@ const placeModal = ({ closeModal, placeholder, secondaryButton, primaryButton, o
 
       <Icon icon="file-upload" className="cs--icon"/>
       <label>J'importe un fichier excel (Option)</label>
-      <Uploader className="cs--uploader" action="//jsonplaceholder.typicode.com/posts/" dragable>
+      <Uploader className="cs--uploader" action="//jsonplaceholder.typicode.com/posts/" accept=".xlsx" onUpload={handleUploadExcelFile} autoUpload={true} dragable>
         <div className="cs--uploader">Cliquez ou Déposez un fichier Excel </div>
       </Uploader>
 
