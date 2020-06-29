@@ -17,7 +17,7 @@ function exportBarcodesToPdf(barcodesImages)
 
   // Font size and type for additionnal text above barcode
   doc.setFontType("bold");
-  doc.setFontSize(9);
+  doc.setFontSize(18);
 
   barcodesImages.forEach((barcodeImg, i) => {
     if (i>0 && i%BARCODE_PER_PAGE === 0) {
@@ -27,9 +27,9 @@ function exportBarcodesToPdf(barcodesImages)
 
     console.log(y)
     if (barcodeImg.additionnalTxt)
-      doc.text(barcodeImg.additionnalTxt, 5, y + 5)
+      doc.text(barcodeImg.additionnalTxt, 5, y + 30)
 
-    doc.addImage({imageData: barcodeImg.img, format: "PNG", x: 5, y: y+15})
+    doc.addImage({imageData: barcodeImg.img, format: "PNG", x: 5, y: y+50})
   });
 
   doc.save('barcodes.pdf')
@@ -53,7 +53,7 @@ export function generateBarcodesPdf(dataArr)
               textxalign:  'center',        // Always good to set this
         });
 
-        var barcodeImg = new Image(barcodeCanvas.width, barcodeCanvas.height);
+        var barcodeImg = new Image(barcodeCanvas.width, barcodeCanvas.height - 8);
         barcodeImg.src = barcodeCanvas.toDataURL('image/png')
         barcodesImages.push({img: barcodeImg, additionnalTxt: data.additionnalTxt});
     } catch (e) {
