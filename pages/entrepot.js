@@ -632,6 +632,21 @@ class Entrepot extends React.Component {
     this.setState(prevState => ({...prevState, catalogAutocompleteFilter: value}));
   }
 
+  exportProductBarcodes()
+  {
+    const {checkedKeys} = this.state;
+    let barcodes = [];
+
+    for (let key of checkedKeys)
+    {
+      const product = this.state.productList.find(product => product.id === key);
+      barcodes.push({toBarcode: product.barcode, additionnalTxt: [product.refCode, product.product /** product name */]});
+    }
+
+    if (barcodes.length > 0)
+      generateBarcodesPdf(barcodes);
+  }
+
   render() {
     const {active, checkedKeys} = this.state;
 
@@ -877,6 +892,7 @@ class Entrepot extends React.Component {
                     importModal={() => this.openModal('catalogue')}
                   />)}
                   {(indeterminate || checked) && (
+                    <>
                     <IconButton
                       style={{marginTop: '20px', marginRight:'5px'}}
                       className="inner-right"
@@ -885,6 +901,15 @@ class Entrepot extends React.Component {
                       appearance="ghost"
                       onClick={() => this.openModal('delete')}
                     />
+                    <IconButton
+                      style={{marginTop: '20px', marginRight:'5px'}}
+                      className="inner-right"
+                      color="yellow"
+                      icon={<Icon icon="qrcode" />}
+                      appearance="primary"
+                      onClick={() => this.exportProductBarcodes()}
+                    />
+                    </>
                   )}
                 </div>
                 <CustomFilter

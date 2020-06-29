@@ -649,7 +649,6 @@ nextPage = (data) => {
                       subtitle={"Visualiser les produits ici, pour en ajouter d’autre, rendez-vous dans Entrepôt > Catalogue."}
                     />
                    {(indeterminate || checked) && (
-                    <>
                     <IconButton
                       style={{marginTop: '20px', marginRight:'5px'}}
                       className="inner-right"
@@ -657,8 +656,7 @@ nextPage = (data) => {
                       icon={<Icon icon="qrcode" />}
                       appearance="primary"
                       onClick={() => this.exportProductInBarcodes()}
-                    />
-                    </>)}
+                    />)}
                 </div>
                 <CustomFilter
                   //needFilter={false}
