@@ -413,8 +413,8 @@ class Operation extends Component {
       case 'carton':
         this.createCartonOut(null);
         break;
-      case 'reset_delivery':
-        this.resetDeliveries();
+      case 'reset_receipts':
+        this.resetReceipts();
       break;
       case 'export':
         this.exportDeliveries();
@@ -425,9 +425,9 @@ class Operation extends Component {
   /**
    * @description reset the selected deliveries status to "Todo" status
    */
-  resetDeliveries()
+  resetReceipts()
   {
-    this.resetMultipleOperationsStatus(this.whOutService, this.refreshWhOutList.bind(this));
+    this.resetMultipleOperationsStatus(this.whInOpService, this.refreshWhInList.bind(this));
   }
 
   closeModal(type) {
@@ -1162,7 +1162,7 @@ class Operation extends Component {
                 secondaryButton="Non. Annuler."
                 primaryButton="Oui. Changer le statut."
                 closeModal={() => this.closeModal('reset')}
-                validateModal={() => this.validateModal('reset_delivery')}
+                validateModal={() => this.validateModal('reset_receipts')}
               />
             </Modal>
           </div>
