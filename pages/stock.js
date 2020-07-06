@@ -522,12 +522,12 @@ nextPage = (data) => {
 
     if (this.state.productsAutocompleteFilter)
     {
-      console.log(typeof this.state.productsAutocompleteFilter)
       filteredProductsList = filteredProductsList
                               .filter(item => item.product.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
                                               item.code.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
                                               item.place.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.carton.includes(this.state.productsAutocompleteFilter.toUpperCase()))
+                                              item.carton.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
+                                              item.barcode.includes(this.state.productsAutocompleteFilter.toUpperCase()))
     }
 
     return filteredProductsList;
