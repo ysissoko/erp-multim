@@ -215,6 +215,12 @@ class Stock extends React.Component {
     return sum;
   }
 
+  exportProductIn()
+  {
+    console.log("Export product in")
+    this.productInService.exportExcelFile(this.state.productList.filter(product => this.state.checkedKeys.indexOf(product.id) !== -1));
+  }
+
   refreshProductInStock()
   {
     this.setState({
@@ -649,6 +655,16 @@ nextPage = (data) => {
                       subtitle={"Visualiser les produits ici, pour en ajouter d’autre, rendez-vous dans Entrepôt > Catalogue."}
                     />
                    {(indeterminate || checked) && (
+                     <>
+                     <IconButton
+                     style={{marginTop: '20px', marginRight:'10px'}}
+                     className="inner-right"
+                     color="violet"
+                     icon={<Icon icon="file-excel-o" />}
+                     appearance="primary"
+                     onClick={() => this.exportProductIn()}
+                    // onClick={this.handleExportMultipleWhOutToExcel} //TO DO
+                    />
                     <IconButton
                       style={{marginTop: '20px', marginRight:'5px'}}
                       className="inner-right"
@@ -656,7 +672,8 @@ nextPage = (data) => {
                       icon={<Icon icon="qrcode" />}
                       appearance="primary"
                       onClick={() => this.exportProductInBarcodes()}
-                    />)}
+                    />
+                    </>)}
                 </div>
                 <CustomFilter
                   //needFilter={false}
