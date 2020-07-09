@@ -533,7 +533,8 @@ nextPage = (data) => {
                                               item.code.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
                                               item.place.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
                                               item.carton.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.barcode.includes(this.state.productsAutocompleteFilter.toUpperCase()))
+                                              item.barcode.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
+                                              item.brand.includes(this.state.productsAutocompleteFilter.toUpperCase()))
     }
 
     return filteredProductsList;
