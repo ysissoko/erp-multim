@@ -45,7 +45,7 @@ class LoginForm extends Component {
                           localStorage.setItem("access_token", result.data.access_token);
                           Router.push("/operation");
                         }).catch(e => {
-                          if(e.response.data.statusCode === 401)
+                          if(e.response && e.response.data.statusCode === 401)
                             Alert.error("Identifiants incorrect", 5000);
                           else
                             Alert.error("Erreur de connexion au serveur", 5000);
