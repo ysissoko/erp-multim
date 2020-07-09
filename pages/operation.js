@@ -50,6 +50,7 @@ import CustomTagFilter from '../components/datatable/customTagFilter';
 import HeaderTitleTagWhOut from '../components/_shared/headerTitleTagWhOut';
 import { Router } from 'next/router';
 import { getToken}  from "../utils/token"
+import {exportWhOutToPdf} from "../utils/whout-export-pdf"
 
 class Operation extends Component {
 
@@ -111,6 +112,7 @@ class Operation extends Component {
     this.handleConfirm = this.handleConfirm.bind(this);
     // this.handleExportMultipleWhOutToExcel = this.handleExportMultipleWhOutToExcel.bind(this);
     this.handleExportSortedChange = this.handleExportSortedChange.bind(this);
+    this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
 
     this.onWhOutDateClean = this.onWhOutDateClean.bind(this);
     this.onWhInDateClean = this.onWhInDateClean.bind(this);
@@ -118,8 +120,15 @@ class Operation extends Component {
     this.onWhInAutocompleteInputChange = this.onWhInAutocompleteInputChange.bind(this);
     this.onWhOutAutocompleteInputChange = this.onWhOutAutocompleteInputChange.bind(this);
     this.onWhOutFilterChange = this.onWhOutFilterChange.bind(this);
+
   }
 
+  handleDownloadPdf()
+  {
+    console.log("download as pdf")
+    console.log(this.state.selectedDelivery);
+    exportWhOutToPdf(this.state.selectedDelivery);
+  }
 
   // Triggered when date filter is cleaned
   onWhOutDateClean(event)
@@ -932,6 +941,7 @@ class Operation extends Component {
                     onBackButton={() => this.backTo('allReceipt')}
                     primaryButton="Télécharger"
                     downloadExcel={false}
+                    downloadPdf={false}
                   />
                   {/* TO DO CHANGE DATA */}
                   <HeaderTitleTagWhIn
@@ -1069,10 +1079,11 @@ class Operation extends Component {
                   <ToolbarSmall
                     label="Mes Bons de Préparation"
                     onBackButton={() => this.backTo('allDelivery')}
-                    //download
-                    primaryButton="Télécharger"
+                    primaryButton="Excel"
                     downloadExcel={true}
+                    downloadPdf={true}
                     onDownload={this.handleExportWhOutToExcel}
+                    onDownloadPdf={this.handleDownloadPdf}
                     //search
                     //onAutocompleteInputChange={}
                   />
