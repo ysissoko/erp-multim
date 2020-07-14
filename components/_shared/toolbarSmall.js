@@ -27,7 +27,7 @@ const ToolbarSmall = ({ data, dataSearch, onAutocompleteInputChange, primaryButt
           </Button>
           )}
 
-        {downloadPdf && (
+        {/*downloadPdf && (
           <Button
             style={{float: 'inherit'}}
             color="blue"
@@ -38,7 +38,7 @@ const ToolbarSmall = ({ data, dataSearch, onAutocompleteInputChange, primaryButt
               style={{marginRight: '10px'}}/>
             PDF
           </Button>
-          )}
+          )*/}
           <InputGroup style={{float: 'inherit', width: '200px', marginRight:'10px'}}>
             <AutoComplete
               data={dataSearch}
