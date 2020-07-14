@@ -422,10 +422,10 @@ class Stock extends React.Component {
     //CHECKBOX
   // TO DO : CHANGE DATA "this.state.productList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.state.productList.map(item => item.id)
-    : (checked && this.state.active === 2) ? this.state.cartonsList.map(item => item.id)
-    : (checked && this.state.active === 3) ? this.state.cartonsOutList.map(item => item.id)
-    : (checked && this.state.active === 4) ? this.state.cartonMoveHistory.map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.applyProductsFilters(this.state.productList).map(item => item.id)
+    : (checked && this.state.active === 2) ? this.applyCartonsInFilters(this.state.cartonsList).map(item => item.id)
+    : (checked && this.state.active === 3) ? this.applyCartonsOutFilters(this.state.cartonsOutList).map(item => item.id)
+    : (checked && this.state.active === 4) ? this.applyHistoryFilters(this.state.cartonMoveHistory).map(item => item.id)
     : [];
     this.setState({
       checkedKeys

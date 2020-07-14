@@ -152,7 +152,12 @@ class Operation extends Component {
       let promise = service.delete(key);
 
       promise.then((deleteResult) => console.log(deleteResult))
-              .catch(e => Alert.error(e.message, 5000));
+              .catch(e => {
+                if (e.response.status === 400)
+                  Alert.error("Suppression impossible. Des produits sont rattachés à l'opération.", 5000)
+                else
+                  Alert.error(e.message, 5000)
+              });
 
       deletePromises.push(promise);
     });
@@ -172,7 +177,9 @@ class Operation extends Component {
       let promise = service.update(key, {status: "todo"});
 
       promise.then((updateResult) => console.log(updateResult))
-              .catch(e => Alert.error(e.message, 5000));
+              .catch(e => {
+                Alert.error("Impossible de réinitialiser l'opération.", 5000);
+              });
 
       updatePromises.push(promise);
     });
@@ -499,8 +506,8 @@ class Operation extends Component {
   //CHECKBOX
   // TO DO : CHANGE DATA "receiptList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.state.receiptList.map(item => item.id)
-    : (checked && this.state.active === 2) ? this.state.deliveriesList.map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.applyFiltersToReceiptsList(this.state.receiptList).map(item => item.id)
+    : (checked && this.state.active === 2) ? this.applyFiltersToDeliveriesList(this.state.deliveriesList).map(item => item.id)
     : [];
     this.setState({
       checkedKeys
