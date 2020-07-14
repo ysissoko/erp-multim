@@ -499,8 +499,8 @@ class Operation extends Component {
   //CHECKBOX
   // TO DO : CHANGE DATA "receiptList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.state.receiptList.map(item => item.id)
-    : (checked && this.state.active === 2) ? this.state.deliveriesList.map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.applyFiltersToReceiptsList(this.state.receiptList).map(item => item.id)
+    : (checked && this.state.active === 2) ? this.applyFiltersToDeliveriesList(this.state.deliveriesList).map(item => item.id)
     : [];
     this.setState({
       checkedKeys

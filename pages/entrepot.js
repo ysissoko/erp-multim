@@ -392,10 +392,10 @@ class Entrepot extends React.Component {
   //CHECKBOX
   // TO DO : CHANGE DATA "receiptList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.state.placeList.map(item => item.id)
-    : (checked && this.state.active === 2) ? this.state.brandList.map(item => item.id)
-    : (checked && this.state.active === 3) ? this.state.providerList.map(item => item.id)
-    : (checked && this.state.active === 4) ? this.state.productList.map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.applyPlacesFilters(this.state.placeList).map(item => item.id)
+    : (checked && this.state.active === 2) ? this.applyBrandsFilters(this.state.brandList).map(item => item.id)
+    : (checked && this.state.active === 3) ? this.applyProvidersFilters(this.state.providerList).map(item => item.id)
+    : (checked && this.state.active === 4) ? this.applyCatalogFilters(this.state.productList).map(item => item.id)
     : [];
     this.setState({
       checkedKeys
