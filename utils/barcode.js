@@ -10,6 +10,7 @@ if (typeof window !== "undefined") {
 
 const BARCODE_BAR_H = 10; // in mm
 const BARCODE_PER_PAGE = 6;
+const BARCODE_X = 100;
 
 function exportBarcodesToPdf(barcodesImages)
 {
@@ -27,9 +28,9 @@ function exportBarcodesToPdf(barcodesImages)
 
     console.log(y)
     if (barcodeImg.additionnalTxt)
-      doc.text(barcodeImg.additionnalTxt, 5, y + 30)
+      doc.text(barcodeImg.additionnalTxt, BARCODE_X, y + 30)
 
-    doc.addImage({imageData: barcodeImg.img, format: "PNG", x: 5, y: y+50})
+    doc.addImage({imageData: barcodeImg.img, format: "PNG", x: BARCODE_X, y: y+50})
   });
 
   doc.save('barcodes.pdf')
