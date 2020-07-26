@@ -51,7 +51,7 @@ const DataTable = ({
             loading={loading}
         >
             {column.map((c) => {
-                return ( 
+                return (
                     <Column key={c} width={c.width} resizable={c.resizable} sortable={c.sortable}>
                         {c.datakey === "id" ?
                           <CheckHeaderColumn disabled={c.disabled} checked={checked} indeterminate={indeterminate} onChange={handleCheckAll}/>
@@ -72,7 +72,7 @@ const DataTable = ({
                         ? <EditCell dataKey="marque" onChange={handleChange}/>
                         : c.datakey === "supply"
                         ? <EditCell dataKey="supply" onChange={handleChange}/>
-                        : (c.datakey === "product" && c.key === "catalog")
+                        : (c.datakey === "product" && c.key === 2)
                         ? <EditCell dataKey="product" onChange={handleChange}/>
                         : <Cell dataKey={c.datakey}/>
                     }
@@ -107,7 +107,7 @@ const DataTable = ({
           onChangeLength={handleChangeLength}
         />
         </>
-    ); 
+    );
   };
-  
+
   export default DataTable;

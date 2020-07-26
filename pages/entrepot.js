@@ -509,6 +509,13 @@ class Entrepot extends React.Component {
                               .catch(e => Alert.error(e.message, 2000));
         }
         break;
+        case 4:{
+          console.log("update catalog product");
+          this.productService.update(rowData.id, {name: rowData.product})
+                              .then(result => console.log(result))
+                              .catch(e => Alert.error(e.message, 2000));
+        }
+        break;
       }
     }
 
@@ -970,6 +977,11 @@ class Entrepot extends React.Component {
                   displayLength={this.state.displayLength}
                   page={this.state.page}
                   total={productList.length}
+                  //edit et action cell
+                  editing={!this.state.editing}
+                  moreActions={this.state.moreActions}
+                  handleChange={this.handleChange}
+                  handleEditState={this.handleEditState}
                 />
               </>
             )}
