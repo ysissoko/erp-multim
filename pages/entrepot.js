@@ -452,11 +452,12 @@ class Entrepot extends React.Component {
   //EDIT CELL
   handleChange = (id, key, value) => {
 
-    const { placeList, brandList, providerList } = this.state;
+    const { placeList, brandList, providerList, productList } = this.state;
 
     const nextData = (this.state.active === 1) ? Object.assign([], placeList)
     : (this.state.active === 2) ? Object.assign([], brandList)
     : (this.state.active === 3) ? Object.assign([], providerList)
+    : (this.state.active === 4) ? Object.assign([], productList)
     : [];
 
     console.log(id)
@@ -469,12 +470,13 @@ class Entrepot extends React.Component {
 
   handleEditState = (rowData) => {
 
-    const { placeList, brandList, providerList } = this.state;
+    const { placeList, brandList, providerList, productList } = this.state;
 
     console.log(rowData)
     const nextData = (this.state.active === 1) ? Object.assign([], placeList)
     : (this.state.active === 2) ? Object.assign([], brandList)
     : (this.state.active === 3) ? Object.assign([], providerList)
+    : (this.state.active === 4) ? Object.assign([], productList)
     : [];
 
     const activeItem = nextData.find(item => item.id === rowData.id);
