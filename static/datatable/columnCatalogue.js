@@ -40,5 +40,13 @@ export default [
         width: 150,
         sortable: true,
         resizable: true
+    },
+    {
+        key: 6,
+        text: "Action",
+        datakey: "action",
+        width: 100,
+        sortable: false,
+        resizable: true
     }
 ];
