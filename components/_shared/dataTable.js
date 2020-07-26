@@ -39,7 +39,8 @@ const DataTable = ({
     return (
         <>
         <Table
-            height={500}
+            //height={500}
+            autoHeight
             affixHeader
             data={data}
             sortColumn={sortColumn}
@@ -71,6 +72,8 @@ const DataTable = ({
                         ? <EditCell dataKey="marque" onChange={handleChange}/>
                         : c.datakey === "supply"
                         ? <EditCell dataKey="supply" onChange={handleChange}/>
+                        : (c.datakey === "product" && c.key === "catalog")
+                        ? <EditCell dataKey="product" onChange={handleChange}/>
                         : <Cell dataKey={c.datakey}/>
                     }
                     </Column>
