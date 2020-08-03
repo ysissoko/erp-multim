@@ -556,7 +556,11 @@ class Entrepot extends React.Component {
     this.productService.importExcelFile(this.state.catalogExcelFile.blobFile).then((products) => {
       this.refreshCatalog();
       this.closeModal("catalogue");
-    }, error => Alert.error(error.message, 5000));
+    }, error => {
+      console.error(error);
+      if (error.response)
+        Alert.error(error.response.data.message, 5000)
+    });
   }
 
   importExcelPlaces(){
