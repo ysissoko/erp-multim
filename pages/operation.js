@@ -99,7 +99,8 @@ class Operation extends Component {
       whOutStatusFilters: [],
       whInSearchTerm: "",
       whOutSearchTerm: "",
-      sortedExport: true
+      sortedExport: true,
+      importInProgress: false
     }
 
     this.handleCartonInputChange = this.handleCartonInputChange.bind(this);
@@ -424,7 +425,7 @@ class Operation extends Component {
         this.createWhInOp();
         break;
       case 'delivery':
-        this.createDelivery();
+        if (!this.state.importInProgress) this.createDelivery();
       break;
       case 'carton':
         this.createCartonOut(null);
@@ -537,14 +538,19 @@ class Operation extends Component {
 
   createDelivery()
   {
-    //console.log("create delivery");
+    console.log("Create delivery");
+    this.setState((prevState) => ({...prevState, importInProgress: true}));
     this.whOutService.importDeliveriesFromExcelFile(this.state.receiptExcelFile, this.state.deliveryType)
                       .then((response) => {
+                        this.setState((prevState) => ({...prevState, importInProgress: false}));
                         this.createCartonOut(null);
                         this.refreshWhOutList();
                         this.closeModal('delivery')
-                        Alert.success('Création du WH/OUT avec succès !', 5000)
-                      }, error => Alert.error(error.message, 5000));
+                        Alert.success('Création du WH/OUT avec succès !', 5000);
+                      }, error => {
+                        this.setState((prevState) => ({...prevState, importInProgress: false}));
+                        Alert.error(error.message, 5000)
+                      });
   }
 
   createWhInOp()

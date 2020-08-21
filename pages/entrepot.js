@@ -75,7 +75,8 @@ class Entrepot extends React.Component {
       brandsAutocompleteFilter: "",
       providersAutocompleteFilter: "",
       placesAutocompleteFilter: "",
-      catalogAutocompleteFilter: ""
+      catalogAutocompleteFilter: "",
+      importInProgress: false
     }
 
     this.handleBrandInputValueChange = this.handleBrandInputValueChange.bind(this);
@@ -356,7 +357,7 @@ class Entrepot extends React.Component {
         this.createProvider();
         break;
       case 'catalogue' :
-        this.importExcel();
+        if (!this.state.importInProgress) this.importExcel();
         break;
       };
   }
@@ -551,12 +552,20 @@ class Entrepot extends React.Component {
       }
   }
 
-  importExcel(){
-    console.log(this.state.catalogExcelFile.blobFile);
+  importExcel()
+  {
+    this.setState(prevState => ({...prevState, importInProgress: true}));
+
     this.productService.importExcelFile(this.state.catalogExcelFile.blobFile).then((products) => {
+      this.setState(prevState => ({...prevState, importInProgress: false}));
       this.refreshCatalog();
       this.closeModal("catalogue");
-    }, error => Alert.error(error.message, 5000));
+      Alert.success("Import OK");
+    }).catch(error => {
+      this.setState(prevState => ({...prevState, importInProgress: false}));
+      if (error.response) Alert.error(error.response.data.message, 5000)
+      else Alert.error(error.message);
+    });
   }
 
   importExcelPlaces(){
