@@ -560,10 +560,11 @@ class Entrepot extends React.Component {
       this.setState(prevState => ({...prevState, importInProgress: false}));
       this.refreshCatalog();
       this.closeModal("catalogue");
-    }, error => {
+      Alert.success("Import OK");
+    }).catch(error => {
       this.setState(prevState => ({...prevState, importInProgress: false}));
-      if (error.response)
-        Alert.error(error.response.data.message, 5000)
+      if (error.response) Alert.error(error.response.data.message, 5000)
+      else Alert.error(error.message);
     });
   }
 

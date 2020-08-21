@@ -425,8 +425,7 @@ class Operation extends Component {
         this.createWhInOp();
         break;
       case 'delivery':
-        if (!this.state.importInProgress)
-          this.createDelivery();
+        if (!this.state.importInProgress) this.createDelivery();
       break;
       case 'carton':
         this.createCartonOut(null);
