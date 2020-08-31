@@ -1043,7 +1043,7 @@ class Entrepot extends React.Component {
                       closeModal={() => this.closeModal('catalogue')}
                       validateModal= {() => this.validateModal('catalogue')}
                       handleUploadExcelFile= {this.handleUploadCatalogExcelFile}
-                      disabled={!this.state.activeButton} //if input null disabled the button
+                      disabled={this.state.importInProgress || !this.state.activeButton} //if input null disabled the button
                     />
                   </Modal>
                 </div>
