@@ -1224,7 +1224,7 @@ class Operation extends Component {
                 handleUploadExcelFile= {this.handleUploadReceiptExcelFile}
                 handleCartonOutCountChange = {this.handleCartonOutCountChange}
                 handleDeliveryTypeChange={this.handleDeliveryTypeChange}
-                disabled={!this.state.activeButton}
+                disabled={this.state.importInProgress || !this.state.activeButton}
               />
             </Modal>
           </div>
