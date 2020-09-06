@@ -1,10 +1,10 @@
 import React from 'react';
 import { Modal, Icon, Button } from 'rsuite';
 
-const ConfirmModal = ({ closeModal, text, handleConfirm, secondaryButton, primaryButton }) => (
+const ConfirmModal = ({ header, closeModal, text, handleConfirm, secondaryButton, primaryButton }) => (
     <>
       <Modal.Header>
-      <h3>Supprimer</h3>
+      <h3>{ header || "Supprimer" }</h3>
     </Modal.Header>
     <Modal.Body>
       <Icon icon="remind" style={{ color: '#ffb300', fontSize: 24, marginRight: '20px'}}/>

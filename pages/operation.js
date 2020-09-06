@@ -99,8 +99,10 @@ class Operation extends Component {
       whOutStatusFilters: [],
       whInSearchTerm: "",
       whOutSearchTerm: "",
+      whoutMissingProducts: false,
       sortedExport: true,
-      importInProgress: false
+      importInProgress: false,
+      missingDeliveries: []
     }
 
     this.handleCartonInputChange = this.handleCartonInputChange.bind(this);
@@ -111,6 +113,7 @@ class Operation extends Component {
     this.handleExportWhOutToExcel = this.handleExportWhOutToExcel.bind(this);
     this.handleDeliveryTypeChange = this.handleDeliveryTypeChange.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
+    this.handleConfirmMissingWhoutExport = this.handleConfirmMissingWhoutExport.bind(this);
     // this.handleExportMultipleWhOutToExcel = this.handleExportMultipleWhOutToExcel.bind(this);
     this.handleExportSortedChange = this.handleExportSortedChange.bind(this);
     this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
@@ -121,7 +124,13 @@ class Operation extends Component {
     this.onWhInAutocompleteInputChange = this.onWhInAutocompleteInputChange.bind(this);
     this.onWhOutAutocompleteInputChange = this.onWhOutAutocompleteInputChange.bind(this);
     this.onWhOutFilterChange = this.onWhOutFilterChange.bind(this);
+  }
 
+  handleConfirmMissingWhoutExport()
+  {
+    console.log("*********** Export des whout manquant *********");
+    console.log(this.state.missingDeliveries);
+    this.whOutService.exportMissingDeliveries(this.state.missingDeliveries);
   }
 
   handleDownloadPdf()
@@ -415,6 +424,9 @@ class Operation extends Component {
       case 'export' :
         this.setState({export: !this.state.show});
       break;
+      case 'whoutMissingProducts':
+        this.setState({whoutMissingProducts: !this.state.show});
+      break;
       };
   };
 
@@ -433,9 +445,9 @@ class Operation extends Component {
       case 'reset_receipts':
         this.resetReceipts();
       break;
-      case 'export':
-        this.exportDeliveries();
-        break;
+      case 'whoutMissingProducts':
+        this.handleConfirmMissingWhoutExport();
+      break;
     };
   }
 
@@ -466,6 +478,9 @@ class Operation extends Component {
         break;
       case 'export' :
         this.setState({export: this.state.show});
+        break;
+      case 'whoutMissingProducts':
+        this.setState({whoutMissingProducts: this.state.show})
         break;
       };
   }
@@ -541,12 +556,22 @@ class Operation extends Component {
     console.log("Create delivery");
     this.setState((prevState) => ({...prevState, importInProgress: true}));
     this.whOutService.importDeliveriesFromExcelFile(this.state.receiptExcelFile, this.state.deliveryType)
-                      .then((response) => {
+                      .then((deliveriesNotImported) => {
                         this.setState((prevState) => ({...prevState, importInProgress: false}));
                         this.createCartonOut(null);
                         this.refreshWhOutList();
                         this.closeModal('delivery')
-                        Alert.success('Création du WH/OUT avec succès !', 5000);
+                        console.log("Data de l'importation");
+                        //console.log(whOutOpsNotImported);
+                        if (deliveriesNotImported.length === 0)
+                          Alert.success('Création du WH/OUT avec succès !', 5000);
+                        else
+                        {
+                          this.setState(prevState => ({...prevState, missingDeliveries: deliveriesNotImported}));
+                          this.openModal("whoutMissingProducts");
+                          Alert.warning("Certains whout n'ont pas été créés veuillez vérifier les stocks");
+                        }
+
                       }, error => {
                         this.setState((prevState) => ({...prevState, importInProgress: false}));
                         Alert.error(error.message, 5000)
@@ -1172,6 +1197,20 @@ class Operation extends Component {
                 primaryButton="Oui. Supprimer"
                 closeModal={() => this.closeModal('delete')}
                 handleConfirm={this.handleConfirm}
+              />
+            </Modal>
+          </div>
+
+          {/* CONFIRMATION EXPORT MISSING PRODUCT WHOUT */}
+          <div className="modal-container">
+            <Modal backdrop="static" show={this.state.whoutMissingProducts} onHide={() => this.closeModal('whoutMissingProducts')} size="xs" backdrop="static">
+              <ConfirmModal
+                header="Exportation du fichier Excel"
+                text="Exporter le fichier de commandes manquantes ?"
+                secondaryButton="Non. Annuler."
+                primaryButton="Oui. Exporter"
+                closeModal={() => this.closeModal('whoutMissingProducts')}
+                handleConfirm={() => this.validateModal('whoutMissingProducts')}
               />
             </Modal>
           </div>
