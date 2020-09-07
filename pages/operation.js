@@ -445,6 +445,9 @@ class Operation extends Component {
       case 'reset_receipts':
         this.resetReceipts();
       break;
+      case 'export':
+        this.exportDeliveries();
+        break;
       case 'whoutMissingProducts':
         this.handleConfirmMissingWhoutExport();
       break;
