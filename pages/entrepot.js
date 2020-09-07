@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import 'rsuite/lib/styles/index.less';
 import '../static/css/dataTable.less';
 
-import {Panel, Modal, IconButton, Icon, Alert} from "rsuite";
+import {Panel, Modal, IconButton, Icon, Alert, Loader} from "rsuite";
 
 import Frame from '../components/_shared/frame'
 import HeaderTitle from '../components/_shared/headerTitle'
@@ -70,7 +70,8 @@ class Entrepot extends React.Component {
       providerModalInputValue: "",
       checkedKeys: [], //checkbox
       displayLength: 100, //pagination
-      loading: false, //pagination
+      loading: false, //pagination,
+      onImportLoading: false,
       page: 1, //pagination,
       brandsAutocompleteFilter: "",
       providersAutocompleteFilter: "",
@@ -554,15 +555,15 @@ class Entrepot extends React.Component {
 
   importExcel()
   {
-    this.setState(prevState => ({...prevState, importInProgress: true}));
+    this.setState(prevState => ({...prevState, importInProgress: true, onImportLoading: true}));
 
     this.productService.importExcelFile(this.state.catalogExcelFile.blobFile).then((products) => {
-      this.setState(prevState => ({...prevState, importInProgress: false}));
+      this.setState(prevState => ({...prevState, importInProgress: false, onImportLoading: false}));
       this.refreshCatalog();
       this.closeModal("catalogue");
       Alert.success("Import OK");
     }).catch(error => {
-      this.setState(prevState => ({...prevState, importInProgress: false}));
+      this.setState(prevState => ({...prevState, importInProgress: false, onImportLoading: false}));
       if (error.response) Alert.error(error.response.data.message, 5000)
       else Alert.error(error.message);
     });
@@ -1045,6 +1046,9 @@ class Entrepot extends React.Component {
                       handleUploadExcelFile= {this.handleUploadCatalogExcelFile}
                       disabled={this.state.importInProgress || !this.state.activeButton} //if input null disabled the button
                     />
+                    {this.state.onImportLoading && (
+                      <Loader vertical backdrop center speed="fast" size="md" content="Medium" content="loading..."/>
+                    )}
                   </Modal>
                 </div>
 

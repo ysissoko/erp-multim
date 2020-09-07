@@ -129,7 +129,6 @@ class Operation extends Component {
   handleConfirmMissingWhoutExport()
   {
     console.log("*********** Export des whout manquant *********");
-    console.log(this.state.missingDeliveries);
     this.whOutService.exportMissingDeliveries(this.state.missingDeliveries);
   }
 
@@ -554,10 +553,10 @@ class Operation extends Component {
   createDelivery()
   {
     console.log("Create delivery");
-    this.setState((prevState) => ({...prevState, importInProgress: true}));
+    this.setState((prevState) => ({...prevState, importInProgress: true, onLoading: true}));
     this.whOutService.importDeliveriesFromExcelFile(this.state.receiptExcelFile, this.state.deliveryType)
                       .then((deliveriesNotImported) => {
-                        this.setState((prevState) => ({...prevState, importInProgress: false}));
+                        this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
                         this.createCartonOut(null);
                         this.refreshWhOutList();
                         this.closeModal('delivery')
@@ -573,7 +572,7 @@ class Operation extends Component {
                         }
 
                       }, error => {
-                        this.setState((prevState) => ({...prevState, importInProgress: false}));
+                        this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
                         Alert.error(error.message, 5000)
                       });
   }
@@ -1251,9 +1250,6 @@ class Operation extends Component {
             {/* MODAL ADD NEW DELIVERY */}
             <div className="modal-container">
             <Modal show={this.state.delivery} onHide={() => this.closeModal('delivery')} size="sm" backdrop="static">
-            {this.state.onLoading && (
-              <Loader speed="fast" size="md" content="Medium" content="loading..."/>
-            )}
               <DeliveryModal
                 deliveryType={this.state.deliveryType}
                 secondaryButton="Annuler"
@@ -1265,6 +1261,9 @@ class Operation extends Component {
                 handleDeliveryTypeChange={this.handleDeliveryTypeChange}
                 disabled={this.state.importInProgress || !this.state.activeButton}
               />
+            {this.state.onLoading && (
+              <Loader vertical backdrop center speed="fast" size="md" content="Medium" content="loading..."/>
+            )}
             </Modal>
           </div>
 
