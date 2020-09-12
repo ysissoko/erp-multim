@@ -241,36 +241,38 @@ class Entrepot extends React.Component {
     }
   }
 
-  handleUploadCatalogExcelFile(value)
+  handleUploadCatalogExcelFile(blobs)
   {
-    this.setState((prevState) => ({...prevState, catalogExcelFile: value}))
+    const blob = blobs[0];
 
     //control if input null, disabled the button
-    if(value === '') {
+    if(!blob || !blob.blobFile)
+    {
       this.setState({
-        activeButton: false
-      })
-    } else {
-      this.setState({
-        activeButton: true
-      })
+        activeButton: false,
+        catalogExcelFile: null
+      });
+    }
+    else
+    {
+      this.setState((prevState) => ({...prevState, catalogExcelFile: blob.blobFile, activeButton: true}));
     }
   }
 
-  handlePlacesUploadExcelFile(value)
+  handlePlacesUploadExcelFile(blobs)
   {
-    console.log(value);
-    this.setState((prevState) => ({...prevState, placesExcelFile: value, activeButton: true}))
+    const blob = blobs[0];
 
     //control if input null, disabled the button
-    if(value === '') {
+    if(!blob || !blob.blobFile) {
       this.setState({
-        activeButton: false
+        activeButton: false,
+        placesExcelFile: false
       })
-    } else {
-      this.setState({
-        activeButton: true
-      })
+    }
+    else
+    {
+      this.setState((prevState) => ({...prevState, placesExcelFile: blob.blobFile, activeButton: true}))
     }
   }
 
@@ -557,7 +559,7 @@ class Entrepot extends React.Component {
   {
     this.setState(prevState => ({...prevState, importInProgress: true, onImportLoading: true}));
 
-    this.productService.importExcelFile(this.state.catalogExcelFile.blobFile).then((products) => {
+    this.productService.importExcelFile(this.state.catalogExcelFile).then((products) => {
       this.setState(prevState => ({...prevState, importInProgress: false, onImportLoading: false}));
       this.refreshCatalog();
       this.closeModal("catalogue");
@@ -570,8 +572,7 @@ class Entrepot extends React.Component {
   }
 
   importExcelPlaces(){
-    console.log(this.state.placesExcelFile.blobFile);
-    this.placeService.importExcelFile(this.state.placesExcelFile.blobFile).then((places) => {
+    this.placeService.importExcelFile(this.state.placesExcelFile).then((places) => {
       this.refreshPlacesList();
       this.closeModal("place");
     }, error => Alert.error(error.message, 5000));

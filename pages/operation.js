@@ -78,7 +78,7 @@ class Operation extends Component {
       selectedWhOutClassicProductListDetails: [],
       selectedReceipt: null,
       selectedDelivery: null,
-      receiptExcelFile: null,
+      deliveryExcelFile: null,
       providerToCreate: null,
       numCartonsIn: 0,
       numCartonsOut: 0,
@@ -110,7 +110,7 @@ class Operation extends Component {
     this.handleCartonInputChange = this.handleCartonInputChange.bind(this);
     this.handleSelectProvider = this.handleSelectProvider.bind(this);
     this.handleInvoiceNumberChange = this.handleInvoiceNumberChange.bind(this);
-    this.handleUploadReceiptExcelFile = this.handleUploadReceiptExcelFile.bind(this);
+    this.handleUploadDeliveryExcelFile = this.handleUploadDeliveryExcelFile.bind(this);
     this.handleCartonOutCountChange = this.handleCartonOutCountChange.bind(this);
     this.handleExportWhOutToExcel = this.handleExportWhOutToExcel.bind(this);
     this.handleDeliveryTypeChange = this.handleDeliveryTypeChange.bind(this);
@@ -268,19 +268,20 @@ class Operation extends Component {
 
   }
 
-  handleUploadReceiptExcelFile(blob)
+  handleUploadDeliveryExcelFile(blobs)
   {
-    this.setState(prevState => ({...prevState, receiptExcelFile: blob.blobFile}));
+    const blob = blobs[0];
 
     //control if input null, disabled the button
-    if(blob.blobFile === null) {
-    this.setState({
-      activeButton: false
-    })
-    } else {
+    if(!blob || !blob.blobFile) {
       this.setState({
-        activeButton: true
+        activeButton: false,
+        deliveryExcelFile: false
       })
+    }
+    else
+    {
+      this.setState(prevState => ({...prevState, deliveryExcelFile: blob.blobFile, activeButton: true}));
     }
   }
 
@@ -578,12 +579,13 @@ class Operation extends Component {
 
     if (this.state.deliveryType === "dropshipping")
     {
-      this.whOutService.importDeliveriesFromExcelFile(this.state.receiptExcelFile)
+      this.whOutService.importDeliveriesFromExcelFile(this.state.deliveryExcelFile)
           .then((deliveriesNotImported) => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
             this.refreshWhOutList();
-            this.closeModal('delivery')
+            this.closeModal('delivery');
+            console.log(deliveriesNotImported);
 
             if (deliveriesNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
@@ -601,7 +603,7 @@ class Operation extends Component {
     }
     else
     {
-      this.whOutService.importClassicDeliveriesExcelFile(this.state.receiptExcelFile)
+      this.whOutService.importClassicDeliveriesExcelFile(this.state.deliveryExcelFile)
           .then((data) => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
@@ -614,7 +616,7 @@ class Operation extends Component {
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
             {
-              this.setState(prevState => ({...prevState, missingProductsDeliveryClassic: productsNotImported}));
+              this.setState(prevState => ({...prevState, missingProductsDeliveryClassic: data.productsNotImported}));
               this.openModal("whoutClassicMissingProducts");
               Alert.warning("Certains produits n'ont pas été créés pour le whout");
             }
@@ -1342,7 +1344,7 @@ class Operation extends Component {
                 primaryButton="Créer Bon de Préparation"
                 closeModal={() => this.closeModal('delivery')}
                 validateModal= {() => this.validateModal('delivery')}
-                handleUploadExcelFile= {this.handleUploadReceiptExcelFile}
+                handleUploadExcelFile= {this.handleUploadDeliveryExcelFile}
                 handleCartonOutCountChange = {this.handleCartonOutCountChange}
                 handleDeliveryTypeChange={this.handleDeliveryTypeChange}
                 disabled={this.state.importInProgress || !this.state.activeButton}
