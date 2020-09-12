@@ -790,7 +790,7 @@ class Operation extends Component {
     {
       if (selectedDelivery.type === "classic")
       {
-        console.log("selectedDelivery", selectedDelivery)
+        console.log(selectedDelivery)
 
         if (selectedDelivery.cartonsOut)
         {
