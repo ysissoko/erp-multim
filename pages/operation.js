@@ -353,7 +353,7 @@ class Operation extends Component {
           statut: getTagByDeliveryStatus(delivery.status),
           products: this.getDeliveryProductsTotalCount(delivery),
           productsToScan: this.getDeliveryToScanProductsTotalCount(delivery),
-          batch: delivery.batch.refCode,
+          batch: (delivery.batch) ? delivery.batch.refCode : "", // Dans le cas du classique pas de batch no
           orderNum: delivery.orderNum,
           rawDate: new Date(delivery.createdAt),
           orderDate: getFormattedDate(delivery.orderDate),
@@ -790,8 +790,9 @@ class Operation extends Component {
     {
       if (selectedDelivery.type === "classic")
       {
-        if (selectedDelivery.cartonsOut)
         console.log("selectedDelivery", selectedDelivery)
+
+        if (selectedDelivery.cartonsOut)
         {
           selectedDelivery.cartonsOut.forEach((cartonOut) => {
             let treeData = {
