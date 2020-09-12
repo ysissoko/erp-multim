@@ -353,7 +353,7 @@ class Operation extends Component {
           statut: getTagByDeliveryStatus(delivery.status),
           products: this.getDeliveryProductsTotalCount(delivery),
           productsToScan: this.getDeliveryToScanProductsTotalCount(delivery),
-          batch: (delivery.batch) ? delivery.batch.refCode : "", // Dans le cas du classique pas de batch no
+          batch: delivery.batch.refCode, // Dans le cas du classique pas de
           orderNum: delivery.orderNum,
           rawDate: new Date(delivery.createdAt),
           orderDate: getFormattedDate(delivery.orderDate),
@@ -607,9 +607,10 @@ class Operation extends Component {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
             this.refreshWhOutList();
-            this.closeModal('delivery')
+
             console.log("Data de l'importation");
             console.log(productsNotImported);
+
             if (productsNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
@@ -619,9 +620,11 @@ class Operation extends Component {
               Alert.warning("Certains produits n'ont pas été créés pour le whout");
             }
 
+            this.closeModal('delivery');
           }, error => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
-            Alert.error(error.message, 5000)
+            Alert.error(error.message, 5000);
+            this.closeModal('delivery');
           });
     }
   }
@@ -788,10 +791,9 @@ class Operation extends Component {
 
     if (selectedDelivery)
     {
+      console.log(selectedDelivery)
       if (selectedDelivery.type === "classic")
       {
-        console.log(selectedDelivery)
-
         if (selectedDelivery.cartonsOut)
         {
           selectedDelivery.cartonsOut.forEach((cartonOut) => {
@@ -821,6 +823,28 @@ class Operation extends Component {
           })
         }
 
+        // Affichage des products out classic sans cartons
+
+        let treeDataNotPlacedProducts = {
+          id: -1,
+          cartonOut: "A SCANNER",
+          children: []
+        };
+
+        selectedDelivery.productsOutStock
+        .filter(productOutStock => !productOutStock.scanned)
+        .map(productOutStock => {
+            treeDataNotPlacedProducts.children.push({
+            id: productOutStock.id,
+            carton: productOutStock.cartonIn.refCode,
+            place: productOutStock.cartonIn.place.refCode,
+            product: productOutStock.product.refCode,
+            quantityNeeded: productOutStock.quantityNeeded,
+            quantityScanned: 0
+          })
+        })
+
+        selectedWhOutClassicProductListDetails.push(treeDataNotPlacedProducts);
       } else {
           selectedDelivery.productsOutStock.forEach((productOutStock) => {
             selectedWhOutProductListDetails.push({
