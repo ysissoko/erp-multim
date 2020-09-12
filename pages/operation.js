@@ -584,8 +584,7 @@ class Operation extends Component {
             this.createCartonOut(null);
             this.refreshWhOutList();
             this.closeModal('delivery')
-            console.log("Data de l'importation");
-            //console.log(whOutOpsNotImported);
+
             if (deliveriesNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
@@ -603,15 +602,15 @@ class Operation extends Component {
     else
     {
       this.whOutService.importClassicDeliveriesExcelFile(this.state.receiptExcelFile)
-          .then((productsNotImported) => {
+          .then((data) => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
             this.refreshWhOutList();
 
             console.log("Data de l'importation");
-            console.log(productsNotImported);
+            console.log(data.productsNotImported);
 
-            if (productsNotImported.length === 0)
+            if (data.productsNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
             {
