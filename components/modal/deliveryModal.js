@@ -42,7 +42,7 @@ const deliveryModal = ({
     <Modal.Body>
       <Icon icon="file-upload" className="cs--icon"/>
       <label className="cs--label">J'importe le fichier de commandes</label>
-      <Uploader className="cs--uploader" action="//jsonplaceholder.typicode.com/posts/" onUpload={handleUploadExcelFile} dragable autoUpload={true} accept=".xlsx">
+      <Uploader className="cs--uploader" onChange={handleUploadExcelFile} multiple={false} dragable autoUpload={false} accept=".xlsx">
         <div className="cs--uploader">Cliquez ou Déposez un fichier Excel </div>
       </Uploader>
 

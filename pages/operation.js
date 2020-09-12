@@ -78,7 +78,7 @@ class Operation extends Component {
       selectedWhOutClassicProductListDetails: [],
       selectedReceipt: null,
       selectedDelivery: null,
-      receiptExcelFile: null,
+      deliveryExcelFile: null,
       providerToCreate: null,
       numCartonsIn: 0,
       numCartonsOut: 0,
@@ -110,7 +110,7 @@ class Operation extends Component {
     this.handleCartonInputChange = this.handleCartonInputChange.bind(this);
     this.handleSelectProvider = this.handleSelectProvider.bind(this);
     this.handleInvoiceNumberChange = this.handleInvoiceNumberChange.bind(this);
-    this.handleUploadReceiptExcelFile = this.handleUploadReceiptExcelFile.bind(this);
+    this.handleUploadDeliveryExcelFile = this.handleUploadDeliveryExcelFile.bind(this);
     this.handleCartonOutCountChange = this.handleCartonOutCountChange.bind(this);
     this.handleExportWhOutToExcel = this.handleExportWhOutToExcel.bind(this);
     this.handleDeliveryTypeChange = this.handleDeliveryTypeChange.bind(this);
@@ -268,19 +268,20 @@ class Operation extends Component {
 
   }
 
-  handleUploadReceiptExcelFile(blob)
+  handleUploadDeliveryExcelFile(blobs)
   {
-    this.setState(prevState => ({...prevState, receiptExcelFile: blob.blobFile}));
+    const blob = blobs[0];
 
     //control if input null, disabled the button
-    if(blob.blobFile === null) {
-    this.setState({
-      activeButton: false
-    })
-    } else {
+    if(!blob || !blob.blobFile) {
       this.setState({
-        activeButton: true
+        activeButton: false,
+        deliveryExcelFile: false
       })
+    }
+    else
+    {
+      this.setState(prevState => ({...prevState, deliveryExcelFile: blob.blobFile, activeButton: true}));
     }
   }
 
@@ -353,7 +354,7 @@ class Operation extends Component {
           statut: getTagByDeliveryStatus(delivery.status),
           products: this.getDeliveryProductsTotalCount(delivery),
           productsToScan: this.getDeliveryToScanProductsTotalCount(delivery),
-          batch: delivery.batch.refCode,
+          batch: delivery.batch.refCode, // Dans le cas du classique pas de
           orderNum: delivery.orderNum,
           rawDate: new Date(delivery.createdAt),
           orderDate: getFormattedDate(delivery.orderDate),
@@ -578,14 +579,14 @@ class Operation extends Component {
 
     if (this.state.deliveryType === "dropshipping")
     {
-      this.whOutService.importDeliveriesFromExcelFile(this.state.receiptExcelFile)
+      this.whOutService.importDeliveriesFromExcelFile(this.state.deliveryExcelFile)
           .then((deliveriesNotImported) => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
             this.refreshWhOutList();
-            this.closeModal('delivery')
-            console.log("Data de l'importation");
-            //console.log(whOutOpsNotImported);
+            this.closeModal('delivery');
+            console.log(deliveriesNotImported);
+
             if (deliveriesNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
@@ -602,26 +603,29 @@ class Operation extends Component {
     }
     else
     {
-      this.whOutService.importClassicDeliveriesExcelFile(this.state.receiptExcelFile)
-          .then((productsNotImported) => {
+      this.whOutService.importClassicDeliveriesExcelFile(this.state.deliveryExcelFile)
+          .then((data) => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
             this.refreshWhOutList();
-            this.closeModal('delivery')
+
             console.log("Data de l'importation");
-            console.log(productsNotImported);
-            if (productsNotImported.length === 0)
+            console.log(data.productsNotImported);
+
+            if (data.productsNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
             {
-              this.setState(prevState => ({...prevState, missingProductsDeliveryClassic: productsNotImported}));
+              this.setState(prevState => ({...prevState, missingProductsDeliveryClassic: data.productsNotImported}));
               this.openModal("whoutClassicMissingProducts");
               Alert.warning("Certains produits n'ont pas été créés pour le whout");
             }
 
+            this.closeModal('delivery');
           }, error => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
-            Alert.error(error.message, 5000)
+            Alert.error(error.message, 5000);
+            this.closeModal('delivery');
           });
     }
   }
@@ -788,10 +792,10 @@ class Operation extends Component {
 
     if (selectedDelivery)
     {
+      console.log(selectedDelivery)
       if (selectedDelivery.type === "classic")
       {
         if (selectedDelivery.cartonsOut)
-        console.log("selectedDelivery", selectedDelivery)
         {
           selectedDelivery.cartonsOut.forEach((cartonOut) => {
             let treeData = {
@@ -820,6 +824,28 @@ class Operation extends Component {
           })
         }
 
+        // Affichage des products out classic sans cartons
+
+        let treeDataNotPlacedProducts = {
+          id: -1,
+          cartonOut: "A SCANNER",
+          children: []
+        };
+
+        selectedDelivery.productsOutStock
+        .filter(productOutStock => !productOutStock.scanned)
+        .map(productOutStock => {
+            treeDataNotPlacedProducts.children.push({
+            id: productOutStock.id,
+            carton: productOutStock.cartonIn.refCode,
+            place: productOutStock.cartonIn.place.refCode,
+            product: productOutStock.product.refCode,
+            quantityNeeded: productOutStock.quantityNeeded,
+            quantityScanned: 0
+          })
+        })
+
+        selectedWhOutClassicProductListDetails.push(treeDataNotPlacedProducts);
       } else {
           selectedDelivery.productsOutStock.forEach((productOutStock) => {
             selectedWhOutProductListDetails.push({
@@ -1318,7 +1344,7 @@ class Operation extends Component {
                 primaryButton="Créer Bon de Préparation"
                 closeModal={() => this.closeModal('delivery')}
                 validateModal= {() => this.validateModal('delivery')}
-                handleUploadExcelFile= {this.handleUploadReceiptExcelFile}
+                handleUploadExcelFile= {this.handleUploadDeliveryExcelFile}
                 handleCartonOutCountChange = {this.handleCartonOutCountChange}
                 handleDeliveryTypeChange={this.handleDeliveryTypeChange}
                 disabled={this.state.importInProgress || !this.state.activeButton}

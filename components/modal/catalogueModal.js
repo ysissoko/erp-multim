@@ -13,7 +13,7 @@ const CatalogueModal = ({ closeModal, text, secondaryButton, primaryButton, vali
       <h6 className="cs--subtitle">Ajouter de nouveaux produits</h6>
     </Modal.Header>
     <Modal.Body>
-        <Uploader action="//jsonplaceholder.typicode.com/posts/" onUpload={handleUploadExcelFile} dragable autoUpload={true} accept=".xlsx">
+        <Uploader onChange={handleUploadExcelFile} multiple={false} dragable autoUpload={false} accept=".xlsx">
           <div style={styles}>Cliquez ou Déposez un fichier Excel</div>
         </Uploader>
     </Modal.Body>

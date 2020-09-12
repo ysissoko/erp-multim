@@ -33,7 +33,7 @@ const placeModal = ({ closeModal, placeholder, secondaryButton, primaryButton, o
 
       <Icon icon="file-upload" className="cs--icon"/>
       <label>J'importe un fichier excel (Option)</label>
-      <Uploader className="cs--uploader" action="//jsonplaceholder.typicode.com/posts/" accept=".xlsx" onUpload={handleUploadExcelFile} autoUpload={true} dragable>
+      <Uploader className="cs--uploader" multiple={false} accept=".xlsx" onChange={handleUploadExcelFile} autoUpload={false} dragable>
         <div className="cs--uploader">Cliquez ou Déposez un fichier Excel </div>
       </Uploader>
 
