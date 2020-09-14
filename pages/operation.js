@@ -604,19 +604,19 @@ class Operation extends Component {
     else
     {
       this.whOutService.importClassicDeliveriesExcelFile(this.state.deliveryExcelFile)
-          .then((data) => {
+          .then((deliveryClassic) => {
             this.setState((prevState) => ({...prevState, importInProgress: false, onLoading: false}));
             this.createCartonOut(null);
             this.refreshWhOutList();
 
             console.log("Data de l'importation");
-            console.log(data.productsNotImported);
+            console.log(deliveryClassic.productsNotImported);
 
-            if (data.productsNotImported.length === 0)
+            if (deliveryClassic.productsNotImported.length === 0)
               Alert.success('Création du WH/OUT avec succès !', 5000);
             else
             {
-              this.setState(prevState => ({...prevState, missingProductsDeliveryClassic: data.productsNotImported}));
+              this.setState(prevState => ({...prevState, missingProductsDeliveryClassic: deliveryClassic}));
               this.openModal("whoutClassicMissingProducts");
               Alert.warning("Certains produits n'ont pas été créés pour le whout");
             }
