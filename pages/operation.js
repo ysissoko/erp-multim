@@ -113,6 +113,7 @@ class Operation extends Component {
     this.handleUploadDeliveryExcelFile = this.handleUploadDeliveryExcelFile.bind(this);
     this.handleCartonOutCountChange = this.handleCartonOutCountChange.bind(this);
     this.handleExportWhOutToExcel = this.handleExportWhOutToExcel.bind(this);
+    this.handleExporWhoutClassicToExcel = this.handleExporWhoutClassicToExcel.bind(this);
     this.handleDeliveryTypeChange = this.handleDeliveryTypeChange.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
     this.handleConfirmMissingWhoutExport = this.handleConfirmMissingWhoutExport.bind(this);
@@ -248,6 +249,12 @@ class Operation extends Component {
   {
     console.log("export whout to excel")
     this.whOutService.exportExcelFile([this.state.selectedDelivery], true);
+  }
+
+  handleExporWhoutClassicToExcel()
+  {
+    console.log("export whout classic to excel ")
+    this.whOutService.exportWhOutClassicToExcel(this.state.selectedDelivery);
   }
 
   handleCartonOutCountChange(numCartonsOut, event)
@@ -1194,7 +1201,7 @@ class Operation extends Component {
                     primaryButton="Excel"
                     downloadExcel={true}
                     downloadPdf={true}
-                    onDownload={this.handleExportWhOutToExcel}
+                    onDownload={this.state.selectedDelivery.type === "classic" ? this.handleExporWhoutClassicToExcel : this.handleExportWhOutToExcel}
                     onDownloadPdf={this.handleDownloadPdf}
                     //search
                     //onAutocompleteInputChange={}
