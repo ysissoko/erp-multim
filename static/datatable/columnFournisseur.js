@@ -15,10 +15,11 @@ export default [
         datakey: "supply",
         width: 800,
         sortable: true,
-        resizable: true
+        resizable: true,
+        editable: true
     },
     {
-        key: 7,
+        key: 3,
         text: "Action",
         datakey: "action",
         width: 100,

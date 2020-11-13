@@ -27,16 +27,16 @@ export default [
     },
     {
         key: 4,
-        text: "Produits Scannés",
-        datakey: "products",
+        text: "Statut",
+        datakey: "statut",
         width: 200,
         sortable: true,
         resizable: true
     },
     {
         key: 5,
-        text: "Statut",
-        datakey: "statut",
+        text: "Produits scannés",
+        datakey: "products",
         width: 200,
         sortable: true,
         resizable: true

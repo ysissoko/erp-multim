@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import 'rsuite/lib/styles/index.less';
 import '../static/css/dataTable.less';
 
-import {Panel, Modal, IconButton, Icon, Alert, Loader} from "rsuite";
+import {Panel, Modal, IconButton, Icon, Alert, Loader, FormGroup, ControlLabel, RadioGroup, Radio} from "rsuite";
 
 import Frame from '../components/_shared/frame'
 import HeaderTitle from '../components/_shared/headerTitle'
@@ -32,12 +32,14 @@ import columnFournisseur from "../static/datatable/columnFournisseur";
 import columnCatalogue from "../static/datatable/columnCatalogue";
 import {generateBarcodesPdf} from "../utils/barcode"
 
-// ******** FAKE DATA TO CHANGE ********
+// Filters for datatables
 import receiptFilter from '../static/data/filter.js'
 
 // ******** Import needed services from the submodule to request the REST API ********
-import {BrandService, PlaceService, ProviderService, ProductService} from "../services/main.bundle"
+import {BrandService, PlaceService, ProviderService, ProductService} from "../services/main"
 import { getToken } from "../utils/token"
+
+const AUTOCOMPLETE_TIMEOUT = 700;
 
 class Entrepot extends React.Component {
 
@@ -45,6 +47,11 @@ class Entrepot extends React.Component {
   {
     //Call component super class constructor
     super(props);
+
+    this.brandsAutocompleteTimeout = null;
+    this.providersAutocompleteTimeout = null;
+    this.catalogAutocompleteTimeout = null;
+    this.placesAutocompleteTimeout = null;
 
     this.state = {
       show: false,
@@ -65,14 +72,27 @@ class Entrepot extends React.Component {
       place: false,
       fournisseur: false,
       delete: false, //delete confirm modal
+      catalogFilterType: 'product_name',
       brandModalInputValue: "",
       placeModalInputValue: "",
       providerModalInputValue: "",
       checkedKeys: [], //checkbox
-      displayLength: 100, //pagination
+      productsPageDispLen: 100, //pagination
+      brandsPageDispLen: 100, //pagination
+      placesPageDispLen: 100, //pagination
+      providersPageDispLen: 100, //pagination
       loading: false, //pagination,
       onImportLoading: false,
-      page: 1, //pagination,
+      pagePlaces: 1, //pagination,
+      pageProviders: 1, //pagination,
+      pageBrands: 1, //pagination,
+      pageProducts: 1, //pagination,
+      // Pagination: total number of entries. Retrieve entries chunk by chunk from the backend
+      productsTotal: 0,
+      brandsTotal: 0,
+      placesTotal: 0,
+      providersTotal: 0,
+      // Time out lorsque l'on tape dans la recherche pour eviter de faire la requête à chaque lettre entrée
       brandsAutocompleteFilter: "",
       providersAutocompleteFilter: "",
       placesAutocompleteFilter: "",
@@ -95,6 +115,18 @@ class Entrepot extends React.Component {
     this.onCatalogAutocompleteChange = this.onCatalogAutocompleteChange.bind(this);
   }
 
+  componentWillUnmount()
+  {
+    if (this.brandsAutocompleteTimeout)
+      clearTimeout(this.brandsAutocompleteTimeout)
+    if (this.placesAutocompleteTimeout)
+      clearTimeout(this.placesAutocompleteTimeout)
+    if (this.catalogAutocompleteTimeout)
+      clearTimeout(this.catalogAutocompleteTimeout)
+    if (this.providersAutocompleteTimeout)
+      clearTimeout(this.providersAutocompleteTimeout)
+  }
+
   handlePrintPlacesBarcodesBtnClick()
   {
     const places = this.state.placeList.filter((place) => this.state.checkedKeys.indexOf(place.id) !== -1)
@@ -113,9 +145,17 @@ class Entrepot extends React.Component {
     this.setState({
       loading: true
     });
-    this.productService.readAll().then((response) => {
-      this.setState((prevState) => ({...prevState, loading: false, checkedKeys: [], productList: response.data.map((product) => ({ id: product.id, product: product.name, refCode: product.refCode, barcode: product.eanCode, brand: product.brand.name}))}));
-    }, error => Alert.warning(error.message, 2000));
+
+    this.productService.filterProduct({
+      type: this.state.catalogFilterType,
+      searchTerm: this.state.catalogAutocompleteFilter,
+      page: this.state.pageProducts,
+      limit: this.state.productsPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateCatalog(pages);
+    })
   }
 
   refreshBrandsList()
@@ -123,11 +163,16 @@ class Entrepot extends React.Component {
     this.setState({
       loading: true
     });
-    this.brandService.readAll("join=products").then((response) => {
-      console.log(response.data);
-      // Convert the successfully retrieved data and convert the array to be 'datable compliant'
-      this.setState((prevState) => ({...prevState, loading: false, checkedKeys: [], brandList: response.data.map((brand) => ({ id: brand.id, marque: brand.name, product: brand.products.length}))}));
-    }, (error) => Alert.warning(error.message, 2000));
+
+    this.brandService.filterBrand({
+      searchTerm: this.state.brandsAutocompleteFilter,
+      page: this.state.pageBrands,
+      limit: this.state.brandsPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateBrandsList(pages);
+    })
   }
 
   refreshPlacesList()
@@ -135,20 +180,72 @@ class Entrepot extends React.Component {
     this.setState({
       loading: true
     });
-    this.placeService.readAll().then((response) => {
-      console.log(response.data);
-      // Convert the successfully retrieved data and convert the array to be 'datable compliant'
-      this.setState((prevState) => ({...prevState, loading: false, checkedKeys: [], placeList: response.data.map((place) => ({ id: place.id, place: place.refCode}))}));
-    }, (error) => Alert.warning(error.message, 2000));
+
+    this.placeService.filterPlace({
+      searchTerm: this.state.placesAutocompleteFilter,
+      page: this.state.pagePlaces,
+      limit: this.state.placesPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updatePlacesList(pages);
+    })
   }
 
   refreshProvidersList()
   {
-    this.providerService.readAll().then((response) => {
-      console.log(response.data);
-      // Convert the successfully retrieved data and convert the array to be 'datable compliant'
-      this.setState((prevState) => ({...prevState, checkedKeys: [], providerList: response.data.map((provider) => ({ id: provider.id, supply: provider.name}))}));
-    }, (error) => Alert.warning(error.message, 2000));
+    this.providerService.filterProvider({
+      searchTerm: this.state.providersAutocompleteFilter,
+      page: this.state.pageProviders,
+      limit: this.state.providersPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateProvidersList(pages);
+    })
+  }
+
+  updateBrandsList(pages)
+  {
+    this.setState((prevState) => ({
+      ...prevState, 
+      brandsTotal: pages.total, 
+      loading: false, 
+      checkedKeys: [], 
+      brandList: pages.data.map((brand) => ({ id: brand.id, marque: brand.name, product: brand.productsCount }))
+    }));
+  }
+
+  updateCatalog(pages)
+  {
+    this.setState((prevState) => ({
+      ...prevState, 
+      productsTotal: pages.total, 
+      loading: false, 
+      checkedKeys: [], 
+      productList: pages.data.map((product) => ({ id: product.id, product: product.name, refCode: product.refCode, barcode: product.eanCode, brand: product.brand.name}))
+    }));
+  }
+
+  updateProvidersList(pages)
+  {
+    this.setState((prevState) => ({
+      ...prevState, 
+      providersTotal: pages.total, 
+      checkedKeys: [], 
+      providerList: pages.data.map((provider) => ({ id: provider.id, supply: provider.name}))
+    }));
+  }
+
+  updatePlacesList(pages)
+  {
+    console.log(pages)
+    this.setState((prevState) => ({
+      ...prevState, 
+      placesTotal: pages.total, 
+      loading: false, 
+      checkedKeys: [], 
+      placeList: pages.data.map((place) => ({ id: place.id, place: place.refCode }))}));
   }
 
   // Call to API request in this lifecycle hook (triggered when component get mounted on the DOM)
@@ -219,7 +316,6 @@ class Entrepot extends React.Component {
 
   handleConfirm()
   {
-    console.log(this.state.active)
     // Which active page ? to delete call to the correct service to delete the corresponding rows in the database
     switch (this.state.active)
     {
@@ -396,10 +492,10 @@ class Entrepot extends React.Component {
   //CHECKBOX
   // TO DO : CHANGE DATA "receiptList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.applyPlacesFilters(this.state.placeList).map(item => item.id)
-    : (checked && this.state.active === 2) ? this.applyBrandsFilters(this.state.brandList).map(item => item.id)
-    : (checked && this.state.active === 3) ? this.applyProvidersFilters(this.state.providerList).map(item => item.id)
-    : (checked && this.state.active === 4) ? this.applyCatalogFilters(this.state.productList).map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.state.placeList.map(item => item.id)
+    : (checked && this.state.active === 2) ? this.state.brandList.map(item => item.id)
+    : (checked && this.state.active === 3) ? this.state.providerList.map(item => item.id)
+    : (checked && this.state.active === 4) ? this.state.productList.map(item => item.id)
     : [];
     this.setState({
       checkedKeys
@@ -464,9 +560,8 @@ class Entrepot extends React.Component {
     : (this.state.active === 4) ? Object.assign([], productList)
     : [];
 
-    console.log(id)
-
     nextData.find(item => item.id === id)[key] = value;
+    
     this.setState({
       nextData
     });
@@ -476,7 +571,6 @@ class Entrepot extends React.Component {
 
     const { placeList, brandList, providerList, productList } = this.state;
 
-    console.log(rowData)
     const nextData = (this.state.active === 1) ? Object.assign([], placeList)
     : (this.state.active === 2) ? Object.assign([], brandList)
     : (this.state.active === 3) ? Object.assign([], providerList)
@@ -523,8 +617,6 @@ class Entrepot extends React.Component {
       }
     }
 
-    console.log(nextData);
-
     this.setState({
       nextData
     });
@@ -532,16 +624,41 @@ class Entrepot extends React.Component {
 
   //PAGINATION
   handleChangePage = (dataKey) => {
-    this.setState({
-      page: dataKey
-    });
+    console.log("change page" + dataKey)
+    // places
+    if (this.state.active === 1)
+    {
+      this.setState({ pagePlaces: dataKey });
+    }
+
+    // brands
+    if (this.state.active === 2)
+    {
+      this.setState({ pageBrands: dataKey });
+    }
+
+    // providers
+    if (this.state.active === 3)
+    {
+      this.setState({ pageProviders: dataKey });
+    }
+
+    // products
+    if (this.state.active === 4)
+    {
+      this.setState({ pageProducts: dataKey });
+    }
   }
 
   handleChangeLength = (dataKey) => {
-    this.setState({
-      page: 1,
-      displayLength: dataKey
-    });
+    if(this.state.active === 1)
+      this.setState({ pagePlaces: 1,  placesPageDispLen: dataKey });
+    if(this.state.active === 2)
+      this.setState({ pageBrands: 1,  brandsPageDispLen: dataKey });
+    if(this.state.active === 3)
+      this.setState({ pageProviders: 1,  providersPageDispLen: dataKey });
+    if(this.state.active === 4)
+      this.setState({ pageProducts: 1,  productsPageDispLen: dataKey });
   }
 
   nextPage = (data) => {
@@ -603,83 +720,45 @@ class Entrepot extends React.Component {
     }, error => Alert.error(error.message, 5000));
   }
 
-  // Filters
-  // For brands list
-  applyBrandsFilters(brandsList)
-  {
-    let filteredBrandsList = brandsList;
-
-    if (this.state.brandsAutocompleteFilter)
-    {
-      filteredBrandsList = filteredBrandsList.filter(item => item.marque.includes(this.state.brandsAutocompleteFilter.toUpperCase()));
-    }
-
-    return filteredBrandsList;
-  }
-
-  // For providers
-  applyProvidersFilters(providersList)
-  {
-    let filteredProvidersList = providersList;
-
-    if (this.state.providersAutocompleteFilter)
-    {
-      filteredProvidersList = filteredProvidersList.filter(item => item.supply.includes(this.state.providersAutocompleteFilter.toUpperCase()));
-    }
-
-    return filteredProvidersList;
-  }
-
-  // For places
-  applyPlacesFilters(placesList)
-  {
-    let filteredPlacesList = placesList;
-
-    if (this.state.placesAutocompleteFilter)
-    {
-      filteredPlacesList = filteredPlacesList.filter(item => item.place.includes(this.state.placesAutocompleteFilter.toUpperCase()));
-    }
-
-    return filteredPlacesList;
-  }
-
-  applyCatalogFilters(productsList)
-  {
-    let filteredProductsList = productsList;
-
-    if (this.state.catalogAutocompleteFilter)
-    {
-      filteredProductsList = filteredProductsList
-                              .filter(item => item.product.includes(this.state.catalogAutocompleteFilter.toUpperCase()) ||
-                                              item.refCode.includes(this.state.catalogAutocompleteFilter.toUpperCase()) ||
-                                              item.barcode.includes(this.state.catalogAutocompleteFilter) ||
-                                              item.brand.includes(this.state.catalogAutocompleteFilter.toUpperCase()));
-    }
-
-    return filteredProductsList;
-  }
-
   // Autocomplete handlers
   onPlacesAutocompleteChange(value)
   {
-    console.log(value)
-    this.setState(prevState => ({...prevState, placesAutocompleteFilter: value}));
+    if (this.placesAutocompleteTimeout)
+      clearTimeout(this.placesAutocompleteTimeout);
+
+    this.placesAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, placesAutocompleteFilter: value}));
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onBrandsAutocompleteInputChange(value)
   {
-    this.setState(prevState => ({...prevState, brandsAutocompleteFilter: value}));
+    if (this.brandsAutocompleteTimeout)
+      clearTimeout(this.brandsAutocompleteTimeout);
+
+    this.brandsAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, brandsAutocompleteFilter: value}));
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onProvidersAutocompleteInputChange(value)
   {
-    this.setState(prevState => ({...prevState, providersAutocompleteFilter: value}));
+    if (this.providersAutocompleteTimeout)
+      clearTimeout(this.providersAutocompleteTimeout);
+
+    this.providersAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, providersAutocompleteFilter: value}));
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onCatalogAutocompleteChange(value)
   {
-    console.log(value);
-    this.setState(prevState => ({...prevState, catalogAutocompleteFilter: value}));
+    if (this.catalogAutocompleteTimeout)
+      clearTimeout(this.catalogAutocompleteTimeout);
+
+    this.catalogAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, catalogAutocompleteFilter: value}));
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   exportProductBarcodes()
@@ -695,6 +774,37 @@ class Entrepot extends React.Component {
 
     if (barcodes.length > 0)
       generateBarcodesPdf(barcodes);
+  }
+
+  componentDidUpdate(prevProps, prevState)  {
+    if (prevState.pageBrands != this.state.pageBrands 
+      || prevState.brandsPageDispLen != this.state.brandsPageDispLen
+      || prevState.brandsAutocompleteFilter != this.state.brandsAutocompleteFilter)
+    {
+      this.refreshBrandsList();
+    }
+
+    if (prevState.pagePlaces != this.state.pagePlaces 
+      || prevState.placesPageDispLen != this.state.placesPageDispLen
+      || prevState.placesAutocompleteFilter != this.state.placesAutocompleteFilter)
+    {
+      this.refreshPlacesList();
+    }
+
+    if (prevState.pageProducts != this.state.pageProducts 
+      || prevState.productsPageDispLen != this.state.productsPageDispLen
+      || prevState.catalogAutocompleteFilter != this.state.catalogAutocompleteFilter
+      || prevState.catalogFilterType != this.state.catalogFilterType)
+    {
+      this.refreshCatalog();
+    }
+
+    if (prevState.pageProviders != this.state.pageProviders 
+      || prevState.providersPageDispLen != this.state.providersPageDispLen
+      || prevState.providersAutocompleteFilter != this.state.providersAutocompleteFilter)
+    {
+      this.refreshProvidersList()
+    }
   }
 
   render() {
@@ -713,12 +823,6 @@ class Entrepot extends React.Component {
     } else if (checkedKeys.length > 0 && checkedKeys.length < ((currentNav === 1 && this.state.placeList.length) || (currentNav === 2 && this.state.brandList.length) || (currentNav === 3 && this.state.providerList.length) || (currentNav === 4 && this.state.productList.length))) {
       indeterminate = true;
     }
-
-    // Apply filters to lists
-    let brandsList = this.applyBrandsFilters(this.state.brandList);
-    let providersList = this.applyProvidersFilters(this.state.providerList);
-    let placesList = this.applyPlacesFilters(this.state.placeList);
-    let productList = this.applyCatalogFilters(this.state.productList);
 
     return (
         <Frame activeKey="3">
@@ -774,12 +878,10 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par place..."
-                  dataSearch={placesList.map(item => ({value: item.place, label: item.place}))} //TO DO, autocomplete data
-                  //onFilter={}
                   onAutocompleteInputChange={this.onPlacesAutocompleteChange}
                 />
                 <DataTable
-                  data={this.sortData(this.nextPage(placesList))}
+                  data={this.sortData(this.state.placeList)}
                   column={columnPlace}
                   sortColumn={this.state.sortColumn}
                   sortType={this.state.sortType}
@@ -794,14 +896,13 @@ class Entrepot extends React.Component {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={placesList.length}
+                  displayLength={this.state.placesPageDispLen}
+                  page={this.state.pagePlaces}
+                  total={this.state.placesTotal}
                   //edit et action cell
-                  editing={!this.state.editing}
-                  moreActions={this.state.moreActions}
                   handleChange={this.handleChange}
                   handleEditState={this.handleEditState}
+                  editing={true}
                 />
               </>
             )}
@@ -834,12 +935,10 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par marque..."
-                  dataSearch={brandsList.map(item => ({value: item.marque, label: item.marque}))} //TO DO, autocomplete data
                   onAutocompleteInputChange={this.onBrandsAutocompleteInputChange}
-                  //onFilter={}
                 />
                 <DataTable
-                  data={this.sortData(this.nextPage(brandsList))}
+                  data={this.sortData(this.state.brandList)}
                   //column
                   column={columnMarque}
                   sortColumn={this.state.sortColumn}
@@ -855,14 +954,13 @@ class Entrepot extends React.Component {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={brandsList.length}
+                  displayLength={this.state.brandsPageDispLen}
+                  page={this.state.pageBrands}
+                  total={this.state.brandsTotal}
                   //edit et action cell
-                  editing={!this.state.editing}
-                  moreActions={this.state.moreActions}
                   handleChange={this.handleChange}
                   handleEditState={this.handleEditState}
+                  editing={true}
                 />
               </>
             )}
@@ -878,7 +976,6 @@ class Entrepot extends React.Component {
                   <Toolbar
                     data={receiptFilter}
                     primaryButton="Nouveau Fournisseur"
-                    //deleteModal={() => this.openModal('delete')}
                     importModal={() => this.openModal('fournisseur')}
                   />)}
                   {(indeterminate || checked) && (
@@ -892,14 +989,15 @@ class Entrepot extends React.Component {
                     />
                   )}
                 </div>
+                
                 <CustomFilter
                   //search
                   placeholder="Rechercher par fournisseur..."
-                  dataSearch={providersList.map(item => ({value: item.supply, label: item.supply}))} //TO DO, autocomplete data
                   onAutocompleteInputChange={this.onProvidersAutocompleteInputChange}
                 />
+
                 <DataTable
-                  data={this.sortData(this.nextPage(providersList))}
+                  data={this.sortData(this.state.providerList)}
                   //column
                   column={columnFournisseur}
                   sortColumn={this.state.sortColumn}
@@ -915,14 +1013,13 @@ class Entrepot extends React.Component {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={providersList.length}
+                  displayLength={this.state.providersPageDispLen}
+                  page={this.state.pageProviders}
+                  total={this.state.providersTotal}
                   //edit et action cell
-                  editing={!this.state.editing}
-                  moreActions={this.state.moreActions}
                   handleChange={this.handleChange}
                   handleEditState={this.handleEditState}
+                  editing={true}
                 />
               </>
             )}
@@ -965,11 +1062,21 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par produit, marque, barcode..."
-                  //dataSearch={"todo"} //TO DO, autocomplete data
                   onAutocompleteInputChange={this.onCatalogAutocompleteChange}
                 />
+
+                <FormGroup controlId="radioList">
+                  <ControlLabel>Filtrer par: </ControlLabel>
+                  <RadioGroup value={this.state.catalogFilterType} name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, catalogFilterType: v}))} inline>
+                    <Radio value="product_name" checked={true}>Nom produit</Radio>
+                    <Radio value="product_ref">Ref produit</Radio>
+                    <Radio value="product_brand">Marque</Radio>
+                    <Radio value="product_ean">EAN</Radio>
+                  </RadioGroup>
+                </FormGroup>
+
                 <DataTable
-                  data={this.sortData(this.nextPage(productList))}
+                  data={this.sortData(this.state.productList)}
                   //column
                   column={columnCatalogue}
                   sortColumn={this.state.sortColumn}
@@ -985,14 +1092,12 @@ class Entrepot extends React.Component {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={productList.length}
-                  //edit et action cell
-                  editing={!this.state.editing}
-                  moreActions={this.state.moreActions}
+                  displayLength={this.state.productsPageDispLen}
+                  page={this.state.pageProducts}
+                  total={this.state.productsTotal}                  
                   handleChange={this.handleChange}
                   handleEditState={this.handleEditState}
+                  editing={true}
                 />
               </>
             )}

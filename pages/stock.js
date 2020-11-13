@@ -2,7 +2,7 @@ import React from 'react';
 import 'rsuite/lib/styles/index.less';
 import '../static/css/dataTable.less';
 
-import {Panel, Modal, IconButton, Icon, Drawer, Alert} from "rsuite";
+import {Panel, Modal, IconButton, Icon, Drawer, Alert, FormGroup, RadioGroup, Radio, ControlLabel} from "rsuite";
 
 import Frame from '../components/_shared/frame';
 import HeaderTitle from '../components/_shared/headerTitle';
@@ -37,26 +37,40 @@ import filterCarton from "../static/datatable/filterCarton";
 // ******** FAKE DATA TO CHANGE ******
 import receiptFilter from '../static/data/filter.js';
 
-import {ProductInService, WhMovOpService, CartonInService, CartonOutService} from "../services/main.bundle";
+import {ProductInService, WhMovOpService, CartonInService, CartonOutService} from "../services/main";
 import CartonHistoriqueDrawer from '../components/modal/cartonHistoriqueDrawer';
 import {getFormattedDate} from "../utils/date";
 import {getToken} from "../utils/token"
 
+const AUTOCOMPLETE_TIMEOUT = 700
 class Stock extends React.Component {
 
   constructor(props)
   {
     super(props);
+
+    this.productInAutocompleteTimeout = null;
+    this.cartonInAutocompleteTimeout = null;
+    this.cartonOutAutocompleteTimeout = null;
+    this.historyAutocompleteTimeout = null;
+
     this.state = {
       show: false,
+      editing: false,
       receipt:true,
       moreActions: true, //actionCell
-      plusActions: true, //actionCell
       onRowClicked: false, //onRowClick
       active: 1, //by default navbar
       activeButton: false, //disabled button modal
       stockNavbar,
-      selectedCarton: null,
+      selectedCartonInInfo: null,
+      selectedCartonInProducts: [],
+      selectedCartonOutProducts: [],
+      selectedCartonHistory: null,
+      productInFilterType: "product_name",
+      cartonInFilterType: "carton_ref",
+      cartonOutFilterType: 'cartonout_ref',
+      historyFilterType: 'whmov_ref',
       productList: [],
       cartonsList: [],
       cartonsOutList: [],
@@ -68,9 +82,23 @@ class Stock extends React.Component {
       carton: false,
       showCartonOutModal: false,
       checkedKeys: [], //checkbox
-      displayLength: 100, //pagination
+      productPageDispLen: 100, //pagination
+      cartonsInPageDispLen: 100, //pagination
+      cartonsOutPageDispLen: 100, //pagination
+      historyPageDispLen: 100, //pagination
+      pageCartonOutDetailsDispLen: 100,
+      pageCartonInDetailsDispLen: 100,
       loading: false, //pagination
-      page: 1, //pagination
+      pageProducts: 1, //pagination
+      pageCartonsIn: 1, //pagination
+      pageCartonsOut: 1, //pagination
+      pageHistory: 1, //pagination
+      pageCartonInDetails: 1, //pagination
+      pageCartonOutDetails: 1, //pagination
+      productsTotal: 0, //pagination
+      cartonsInTotal: 0, //pagination
+      cartonsOutTotal: 0, //pagination
+      historyTotal: 0, //pagination
       cartonsOutAutocompleteFilter: "",
       cartonsInAutocompleteFilter: "",
       historyAutocompleteFilter: "",
@@ -91,6 +119,9 @@ class Stock extends React.Component {
     this.onHistoryAutocompleteChange = this.onHistoryAutocompleteChange.bind(this);
     this.onHandleCartonsOutFilterChange = this.onHandleCartonsOutFilterChange.bind(this);
     this.onHandleCartonsInFilterChange = this.onHandleCartonsInFilterChange.bind(this);
+
+    this.updateCartonInList = this.updateCartonInList.bind(this);
+    this.updateCartonOutList = this.updateCartonOutList.bind(this);
   }
 
   deleteSelectedCartonsInStock()
@@ -221,37 +252,63 @@ class Stock extends React.Component {
     this.productInService.exportExcelFile(this.state.productList.filter(product => this.state.checkedKeys.indexOf(product.id) !== -1));
   }
 
-  refreshProductInStock()
+  updateWhMovList(pages)
   {
-    this.setState({
-      loading: true
-    });
-    this.productInService.readAll()
-    .then((response) => {
-      this.setState((prevState) => ({...prevState,
-        loading: false,
-        productList: response.data.map((productIn) => ({
-        id: productIn.id,
-        product: productIn.product.name,
-        quantity: productIn.quantity,
-        code: productIn.product.refCode,
-        place: productIn.carton.place.refCode,
-        brand: productIn.product.brand.name,
-        carton: productIn.carton.refCode,
-        barcode: productIn.product.eanCode,
-      }))}));
-    }, error => Alert.warning(error.message, 2000))
+    this.setState((prevState) => ({
+      ...prevState, 
+      loading: false, 
+      historyTotal: pages.total, 
+      cartonMoveHistory: pages.data.map((move) => ({ 
+        id: move.id, operation: move.refCode, 
+        carton: move.carton.refCode, 
+        initial: move.oldPlace.refCode, 
+        current: move.newPlace.refCode, 
+        lastUpdate: getFormattedDate(move.updatedAt)
+      }))
+    }));
   }
 
-  refreshWhMovOps()
+  updateCartonOutList(pages)
   {
-    this.setState({
-      loading: true
-    });
-    this.whMovOpService.readAll()
-    .then((response) => {
-      this.setState((prevState) => ({...prevState, loading: false, cartonMoveHistory: response.data.map((move) => ({ id: move.id, operation: move.refCode, carton: move.carton.refCode, initial: move.oldPlace.refCode, current: move.newPlace.refCode, lastUpdate: getFormattedDate(move.updatedAt)}))}));
-    }, error => Alert.warning(error.message, 2000));
+    console.log(pages)
+    this.setState((prevState) => ({...prevState, loading: false, cartonsOutTotal: pages.total, cartonsOutList: pages.data.map((carton) => ({
+        id: carton.id,
+        cartonOut: carton.refCode,
+        operation:  carton.scanned ? carton.whOutOp.refCode : "",
+        statut: carton.scanned ? "enregistré": "à scanner",
+        quantity: carton.productsCount,
+      }))
+    }));
+  }
+
+  updateCartonInList(pages)
+  {
+    this.setState((prevState) => ({...prevState, loading: false, cartonsInTotal: pages.total, cartonsList: pages.data.map((carton) => ({
+      id: carton.id,
+      carton: carton.refCode,
+      statut: carton.scanned ? "enregistré": "à scanner",
+      place: carton.scanned ? carton.place.refCode : "",
+      operation:  carton.scanned ? carton.whInOp.refCode : "",
+      quantity: carton.productsCount,
+    }))
+  }));
+  }
+
+  updateProductsList(pages)
+  {
+    this.setState((prevState) => ({...prevState,
+      loading: false,
+      productsTotal: pages.total,
+      productList: pages.data.map((productIn) => ({
+      id: productIn.id,
+      product: productIn.product.name,
+      quantity: productIn.quantity,
+      code: productIn.product.refCode,
+      place: productIn.carton.place.refCode,
+      brand: productIn.product.brand.name,
+      carton: productIn.carton.refCode,
+      barcode: productIn.product.eanCode,
+    }))}));
   }
 
   refreshCartonInStock()
@@ -259,20 +316,18 @@ class Stock extends React.Component {
     this.setState({
       loading: true
     });
-    this.cartonInService.readAll()
-    .then((response) => {
-      this.setState((prevState) => ({...prevState, loading: false, cartonsList: response.data.map((carton) => ({
-          id: carton.id,
-          carton: carton.refCode,
-          statut: carton.scanned ? "enregistré": "à scanner",
-          place: carton.scanned ? carton.place.refCode : "",
-          operation:  carton.scanned ? carton.whInOp.refCode : "",
-          moveHistory: carton.whMovOps.map(move => ({operation: move.refCode, initial: move.oldPlace.refCode, current: move.newPlace.refCode, lastUpdate: getFormattedDate(move.updatedAt) })),
-          quantity: this.getProductsQuantity(carton.productsInStock),
-          products: carton.productsInStock.map((productInStock) => ({product: productInStock.product.refCode, quantity: productInStock.quantity}))
-        }))
-      }));
-    }, error => Alert.warning(error.message, 2000))
+    
+    this.cartonInService.filterCartonsIn({
+      type: this.state.cartonInFilterType,
+      tagFilters: this.state.cartonsInStatusTagFilters,
+      searchTerm: this.state.cartonsInAutocompleteFilter,
+      page: this.state.pageCartonsIn,
+      limit: this.state.cartonsInPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateCartonInList(pages);
+    })
   }
 
   refreshCartonOutStock()
@@ -280,20 +335,54 @@ class Stock extends React.Component {
     this.setState({
       loading: true
     });
-    this.cartonOutService.readAll()
-    .then((response) => {
-      console.log(response)
-      this.setState((prevState) => ({...prevState, loading: false, cartonsOutList: response.data.map((carton) => ({
-        id: carton.id,
-        cartonOut: carton.refCode,
-        operation:  carton.scanned ? carton.whOutOp.refCode : "",
-        statut: carton.scanned ? "enregistré": "à scanner",
-        quantity: this.getProductsQuantity(carton.productsOutClassic),
-        products: carton.productsOutClassic.map((productOutClassic) => ({product: productOutClassic.productOutStock.product.refCode, quantity: productOutClassic.quantity}))
-        //whOutOp: carton.whOutOp,
-      }))
-      }));
-    }, error => Alert.warning(error.message, 2000))
+
+    this.cartonOutService.filterCartonsOut({
+      type: this.state.cartonOutFilterType,
+      tagFilters: this.state.cartonsOutStatusTagFilters,
+      searchTerm: this.state.cartonsOutAutocompleteFilter,
+      page: this.state.pageCartonsOut,
+      limit: this.state.cartonsOutPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateCartonOutList(pages);
+    })
+  }
+
+  refreshProductInStock()
+  {
+    this.setState({
+      loading: true
+    });
+    
+    this.productInService.filterProductIn({
+      type: this.state.productInFilterType,
+      searchTerm: this.state.productsAutocompleteFilter,
+      page: this.state.pageProducts,
+      limit: this.state.productPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateProductsList(pages);
+    })
+  }
+
+  refreshWhMovOps()
+  {
+    this.setState({
+      loading: true
+    });
+
+    this.whMovOpService.filterHistory({
+      type: this.state.historyFilterType,
+      searchTerm: this.state.historyAutocompleteFilter,
+      page: this.state.pageHistory,
+      limit: this.state.historyPageDispLen
+    })
+    .then(response => {
+      const pages = response.data;
+      this.updateWhMovList(pages);
+    })
   }
 
   componentDidMount()
@@ -312,6 +401,59 @@ class Stock extends React.Component {
     this.refreshCartonOutStock();
     this.refreshProductInStock();
     this.refreshWhMovOps();
+  }
+
+  componentWillUnmount()
+  {
+    if (this.productInAutocompleteTimeout)
+      clearTimeout(this.productInAutocompleteTimeout)
+
+    if (this.cartonInAutocompleteTimeout)
+      clearTimeout(this.cartonInAutocompleteTimeout)
+
+    if (this.cartonOutAutocompleteTimeout)
+      clearTimeout(this.cartonOutAutocompleteTimeout)
+
+    if (this.historyAutocompleteTimeout)
+      clearTimeout(this.historyAutocompleteTimeout)
+
+  }
+
+  componentDidUpdate(prevProps, prevState)
+  {
+    if (this.state.cartonsInAutocompleteFilter != prevState.cartonsInAutocompleteFilter
+      || this.state.cartonsInStatusTagFilters != prevState.cartonsInStatusTagFilters
+      || this.state.pageCartonsIn != prevState.pageCartonsIn
+      || this.state.cartonsInPageDispLen != prevState.cartonsInPageDispLen
+      || this.state.cartonInFilterType != prevState.cartonInFilterType)
+    {
+      this.refreshCartonInStock();
+    }
+
+    if (this.state.cartonsOutAutocompleteFilter != prevState.cartonsOutAutocompleteFilter
+      || this.state.cartonsOutStatusTagFilters != prevState.cartonsOutStatusTagFilters
+      || this.state.pageCartonsOut != prevState.pageCartonsOut
+      || this.state.cartonsOutPageDispLen != prevState.cartonsOutPageDispLen
+      || this.state.cartonOutFilterType != prevState.cartonOutFilterType)
+    {
+      this.refreshCartonOutStock();
+    }
+
+    if (this.state.historyAutocompleteFilter != prevState.historyAutocompleteFilter
+      || this.state.pageHistory != prevState.pageHistory 
+      || this.state.historyPageDispLen != prevState.historyPageDispLen
+      || this.state.historyFilterType != prevState.historyFilterType)
+    {
+      this.refreshWhMovOps();
+    }
+
+    if (this.state.pageProducts != prevState.pageProducts 
+      || this.state.productPageDispLen != prevState.productPageDispLen
+      || this.state.productsAutocompleteFilter != prevState.productsAutocompleteFilter
+      || this.state.productInFilterType != prevState.productInFilterType)
+    {
+      this.refreshProductInStock();
+    }
   }
 
   openModal(type) {
@@ -386,7 +528,7 @@ class Stock extends React.Component {
   }
 
   //ON ROW CLICK
-  handleAction = (value) => {
+  handleAction = () => {
     this.setState({
       onRowClicked: true,
       checkedKeys: [] //reset checkbox
@@ -394,9 +536,34 @@ class Stock extends React.Component {
   }
 
   //Details Pages
-  onDetailsSelect = (value) => {
-    this.setState(prevState => ({...prevState, selectedCarton: value }));
+  onCartonInDetailsSelect = (value) => {
+    this.cartonInService.getCartonInHistory(value.carton).then(response => {
+      const whMovOps = response.data.whMovOps;
+      this.cartonInService.getCartonInInfo(value.carton).then(response => {
+        const cartonIn = response.data;
+        this.setState(prevState => ({...prevState,
+          selectedCartonHistory: whMovOps.map(move => ({
+            operation: move.refCode, 
+            initial: move.oldPlace.refCode, 
+            current: move.newPlace.refCode, 
+            lastUpdate: getFormattedDate(move.updatedAt) 
+          })),
+          selectedCartonInInfo: value, 
+          selectedCartonInProducts: cartonIn.productsInStock.map((productInStock) => ({product: productInStock.product.refCode, quantity: productInStock.quantity})) 
+        }));
+      })
+    })
+  }
+
+  onCartonOutDetailsSelect = (value) => {
     console.log(value)
+    this.cartonOutService.getCartonOutInfo(value.cartonOut).then(response => {
+      const cartonOut = response.data;
+      this.setState(prevState => ({...prevState, 
+        selectedCartonOutInfo: value, 
+        selectedCartonOutProducts: cartonOut.productsOutClassic.map((productOutClassic) => ({product: productOutClassic.productOutStock.product.refCode, quantity: productOutClassic.quantity})) 
+      }));
+    })
   }
 
   createCartons()
@@ -422,15 +589,16 @@ class Stock extends React.Component {
     //CHECKBOX
   // TO DO : CHANGE DATA "this.state.productList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.applyProductsFilters(this.state.productList).map(item => item.id)
-    : (checked && this.state.active === 2) ? this.applyCartonsInFilters(this.state.cartonsList).map(item => item.id)
-    : (checked && this.state.active === 3) ? this.applyCartonsOutFilters(this.state.cartonsOutList).map(item => item.id)
-    : (checked && this.state.active === 4) ? this.applyHistoryFilters(this.state.cartonMoveHistory).map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.state.productList.map(item => item.id)
+    : (checked && this.state.active === 2) ? this.state.cartonsList.map(item => item.id)
+    : (checked && this.state.active === 3) ? this.state.cartonsOutList.map(item => item.id)
+    : (checked && this.state.active === 4) ? this.state.cartonMoveHistory.map(item => item.id)
     : [];
     this.setState({
       checkedKeys
     });
   }
+
   handleCheck = (value, checked) => {
     const { checkedKeys } = this.state;
     const nextCheckedKeys = checked
@@ -478,122 +646,73 @@ sortData = (data) => {
     return data;
 }
 
-//PAGINATION
-handleChangePage = (dataKey) => {
-  this.setState({
-    page: dataKey
-  });
-}
-handleChangeLength = (dataKey) => {
-  this.setState({
-    page: 1,
-    displayLength: dataKey
-  });
-}
-nextPage = (data) => {
-  const { displayLength, page } = this.state;
-    if (displayLength && page ) {
-        return data.filter((v, i) => {
-        const start = displayLength * (page - 1);
-        const end = start + displayLength;
-          return i >= start && i < end;
-      });
-    }
-}
+  //PAGINATION
+  handleChangePage = (dataKey) => {
+    if (this.state.active === 1)
+      this.setState({ pageProducts: dataKey });
+
+    if (this.state.active === 2)
+      this.setState({ pageCartonsIn: dataKey });
+      
+    if (this.state.active === 3)
+      this.setState({ pageCartonsOut: dataKey });
+
+    if (this.state.active === 4)
+      this.setState({ pageHistory: dataKey });
+  }
+
+  handleChangeLength = (dataKey) => {
+    if (this.state.active === 1)
+      this.setState({pageProducts: 1, productPageDispLen: dataKey });
+
+    if (this.state.active === 2)
+      this.setState({pageCartonsIn: 1, cartonsInPageDispLen: dataKey });
+
+    if (this.state.active === 3)
+      this.setState({pageCartonsOut: 1, cartonsOutPageDispLen: dataKey });
+
+    if (this.state.active === 4)
+      this.setState({pageHistory: 1, historyPageDispLen: dataKey });
+  }
 
   onProductsAutocompleteChange(value)
   {
-    this.setState(prevState => ({...prevState, productsAutocompleteFilter: value}))
+    if (this.productInAutocompleteTimeout)
+      clearTimeout(this.productInAutocompleteTimeout);
+
+    this.productInAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, productsAutocompleteFilter: value}))
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onCartonsOutAutocompleteChange(value)
   {
-    this.setState(prevState => ({...prevState, cartonsOutAutocompleteFilter: value}))
+    if (this.cartonOutAutocompleteTimeout)
+      clearTimeout(this.cartonOutAutocompleteTimeout);
+
+    this.cartonOutAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, cartonsOutAutocompleteFilter: value}))
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onCartonsInAutocompleteChange(value)
   {
-    this.setState(prevState => ({...prevState, cartonsInAutocompleteFilter: value}))
+    if (this.cartonInAutocompleteTimeout)
+      clearTimeout(this.cartonInAutocompleteTimeout);
+
+    this.cartonInAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, cartonsInAutocompleteFilter: value}))
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onHistoryAutocompleteChange(value)
   {
-    this.setState(prevState => ({...prevState, historyAutocompleteFilter: value}))
-  }
+    if (this.historyAutocompleteTimeout)
+      clearTimeout(this.historyAutocompleteTimeout);
 
-  // Filters functions
-  applyProductsFilters(productsList)
-  {
-    let filteredProductsList = productsList;
-
-    if (this.state.productsAutocompleteFilter)
-    {
-      filteredProductsList = filteredProductsList
-                              .filter(item => item.product.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.code.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.place.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.carton.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.barcode.includes(this.state.productsAutocompleteFilter.toUpperCase()) ||
-                                              item.brand.includes(this.state.productsAutocompleteFilter.toUpperCase()))
-    }
-
-    return filteredProductsList;
-  }
-
-  applyCartonsOutFilters(cartonsOutList)
-  {
-    let filteredCartonsOutList = cartonsOutList;
-
-    if (this.state.cartonsOutAutocompleteFilter)
-    {
-      filteredCartonsOutList = filteredCartonsOutList
-                              .filter(item => item.cartonOut.includes(this.state.cartonsOutAutocompleteFilter.toUpperCase()))
-    }
-
-
-    if (this.state.cartonsOutStatusTagFilters && this.state.cartonsOutStatusTagFilters.length > 0)
-    {
-      filteredCartonsOutList = filteredCartonsOutList
-                              .filter(item => this.state.cartonsOutStatusTagFilters.indexOf(item.statut) !== -1);
-    }
-
-    return filteredCartonsOutList;
-  }
-
-  applyCartonsInFilters(cartonsInList)
-  {
-    let filteredCartonsInList = cartonsInList;
-
-    if (this.state.cartonsInAutocompleteFilter)
-    {
-      filteredCartonsInList = filteredCartonsInList
-      .filter(item => item.carton.includes(this.state.cartonsInAutocompleteFilter.toUpperCase()) ||
-                      item.place.includes(this.state.cartonsInAutocompleteFilter.toUpperCase()))
-    }
-
-    if (this.state.cartonsInStatusTagFilters && this.state.cartonsInStatusTagFilters.length > 0)
-    {
-      filteredCartonsInList = filteredCartonsInList
-                              .filter(item => this.state.cartonsInStatusTagFilters.indexOf(item.statut) !== -1);
-    }
-
-    return filteredCartonsInList;
-  }
-
-  applyHistoryFilters(historyList)
-  {
-    let filteredHistoryList = historyList;
-
-    if (this.state.historyAutocompleteFilter)
-    {
-      filteredHistoryList = filteredHistoryList
-      .filter(item => item.operation.includes(this.state.historyAutocompleteFilter.toUpperCase()) ||
-                      item.carton.includes(this.state.historyAutocompleteFilter.toUpperCase()) ||
-                      item.initial.includes(this.state.historyAutocompleteFilter.toUpperCase()) ||
-                      item.current.includes(this.state.historyAutocompleteFilter.toUpperCase()))
-    }
-
-    return filteredHistoryList;
+    this.historyAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, historyAutocompleteFilter: value}))
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onHandleCartonsOutFilterChange(tagFilters)
@@ -604,6 +723,41 @@ nextPage = (data) => {
   onHandleCartonsInFilterChange(tagFilters)
   {
     this.setState(prevState => ({...prevState, cartonsInStatusTagFilters: tagFilters}))
+  }
+
+  handleEditProductQty = (rowData) => {
+    const {productList} = this.state;
+    const activeItem = productList.find(item => item.id === rowData.id);
+    
+    activeItem.status = activeItem.status ? null : 'EDIT';
+    console.log(activeItem.status)
+    const newQty = parseInt(rowData.quantity);
+
+    if (activeItem.status === null)
+    {
+      if (newQty >= 0)
+        this.productInService.update(rowData.id, {quantity: newQty})
+                              .then(result => console.log(result))
+                              .catch(e => console.error(e));
+    }
+
+    this.setState({
+      productList
+    });
+  }
+
+  //EDIT CELL
+  handleChangeProductQty = (id, key, value) => {
+    if (parseInt(value) >= 0)
+    { 
+      const { productList } = this.state;
+
+      productList.find(item => item.id === id)[key] = value;
+  
+      this.setState({
+        productList
+      });
+    }
   }
 
   render() {
@@ -625,11 +779,6 @@ nextPage = (data) => {
       }  else if (checkedKeys.length > 0 && checkedKeys.length < ((currentNav === 1 && this.state.productList.length) || (currentNav === 2 && this.state.cartonsList.length) || (currentNav === 3 && this.state.cartonsOutList.length) || (currentNav === 4 && this.state.cartonMoveHistory.length))) {
         indeterminate = true;
       }
-
-      let cartonsInList = this.applyCartonsInFilters(this.state.cartonsList);
-      let cartonsOutList = this.applyCartonsOutFilters(this.state.cartonsOutList);
-      let cartonsHistoryList = this.applyHistoryFilters(this.state.cartonMoveHistory);
-      let productsList = this.applyProductsFilters(this.state.productList);
 
     return (
         <Frame activeKey="2">
@@ -655,6 +804,7 @@ nextPage = (data) => {
                       title={"Les produits"}
                       subtitle={"Visualiser les produits ici, pour en ajouter d’autre, rendez-vous dans Entrepôt > Catalogue."}
                     />
+
                    {(indeterminate || checked) && (
                      <>
                      <IconButton
@@ -664,7 +814,6 @@ nextPage = (data) => {
                      icon={<Icon icon="file-excel-o" />}
                      appearance="primary"
                      onClick={() => this.exportProductIn()}
-                    // onClick={this.handleExportMultipleWhOutToExcel} //TO DO
                     />
                     <IconButton
                       style={{marginTop: '20px', marginRight:'5px'}}
@@ -677,14 +826,24 @@ nextPage = (data) => {
                     </>)}
                 </div>
                 <CustomFilter
-                  //needFilter={false}
                   placeholder="Rechercher par produit, place, carton..."
                   onAutocompleteInputChange={this.onProductsAutocompleteChange}
-                  dataSearch={productsList.map(item => ({valu: item.code, label: item.code}))}
-                  //onFilter={}
                 />
+
+                <FormGroup controlId="radioList">
+                    <ControlLabel>Filtrer par: </ControlLabel>
+                    <RadioGroup value={this.state.productInFilterType}  name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, productInFilterType: v}))} inline>
+                      <Radio value="product_name" checked={true}>Nom produit</Radio>
+                      <Radio value="product_ref">Ref produit</Radio>
+                      <Radio value="product_brand">Marque</Radio>
+                      <Radio value="product_ean">EAN</Radio>
+                      <Radio value="product_place">Emplacement</Radio>
+                      <Radio value="product_carton">Ref carton</Radio>
+                    </RadioGroup>
+                  </FormGroup>
+
                 <DataTable
-                  data={this.sortData(this.nextPage(productsList))}
+                  data={this.sortData(this.state.productList)}
                   //column
                   column={columnProduct}
                   sortColumn={this.state.sortColumn}
@@ -700,11 +859,12 @@ nextPage = (data) => {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={productsList.length}
-                  //edit et action cell
-                  moreActions={false}
+                  displayLength={this.state.productPageDispLen}
+                  page={this.state.pageProducts}
+                  total={this.state.productsTotal}
+                  editing={true}
+                  handleEditState={this.handleEditProductQty}
+                  handleChange={this.handleChangeProductQty}
                 />
               </>
             )}
@@ -754,13 +914,22 @@ nextPage = (data) => {
                   dataFilter={filterCarton}
                   onAutocompleteInputChange={this.onCartonsInAutocompleteChange}
                   //search
-                  dataSearch={cartonsInList.map(item => ({value: item.carton, label: item.carton}))}
                   onFilter={this.onHandleCartonsInFilterChange}
                 />
+
+                <FormGroup controlId="radioList">
+                    <ControlLabel>Filtrer par: </ControlLabel>
+                    <RadioGroup value={this.state.cartonInFilterType} name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, cartonInFilterType: v}))} inline>
+                      <Radio value="carton_ref" checked={true}>Ref carton</Radio>
+                      <Radio value="carton_whin">Ref whin</Radio>
+                      <Radio value="carton_place">Place</Radio>
+                    </RadioGroup>
+                  </FormGroup>
+
                 <DataTable
-                  data={this.sortData(this.nextPage(cartonsInList))}
+                  data={this.sortData(this.state.cartonsList)}
                   onRowClick={this.handleAction}
-                  onDetails={this.onDetailsSelect}
+                  onDetails={this.onCartonInDetailsSelect}
                   //column
                   column={columnCarton}
                   sortColumn={this.state.sortColumn}
@@ -776,15 +945,14 @@ nextPage = (data) => {
                    //pagination
                    handleChangePage={this.handleChangePage}
                    handleChangeLength={this.handleChangeLength}
-                   displayLength={this.state.displayLength}
-                   page={this.state.page}
-                   total={cartonsInList.length}
+                   displayLength={this.state.cartonsInPageDispLen}
+                   page={this.state.pageCartonsIn}
+                   total={this.state.cartonsInTotal}
                    //edit et action cell
                    moreActions={this.state.moreActions}
-                   plusActions={false}
                 />
                 </>)}
-                {onRowClicked && (
+                {onRowClicked && (this.state.selectedCartonInInfo && this.state.selectedCartonInProducts) && (
                 <>
                   <ToolbarDrawer
                     label="Tous Mes Cartons"
@@ -796,20 +964,14 @@ nextPage = (data) => {
                   <HeaderTitleCarton
                     style={{paddingTop: '0px !important'}}
                     className="table-toolbar header-tag"
-                    title={this.state.selectedCarton.carton}
-                    status={this.state.selectedCarton.statut}
-                    operation={this.state.selectedCarton.operation}
-                    place={this.state.selectedCarton.place ? this.state.selectedCarton.place : "Pas encore de place attribuée" }
+                    title={this.state.selectedCartonInInfo.carton}
+                    status={this.state.selectedCartonInInfo.statut}
+                    operation={this.state.selectedCartonInInfo.operation}
+                    place={this.state.selectedCartonInInfo.place ? this.state.selectedCartonInInfo.place : "Pas encore de place attribuée" }
                   />
-                <CustomFilter
-                  style={{paddingTop: '0px !important'}}
-                  placeholder="Rechercher par produit"
-                  //dataSearch={filterCarton} // TO DO change data
-                  //dataFilter={filterCarton}
 
-                />
                 <DataTable
-                  data={this.state.selectedCarton.products}
+                  data={this.state.selectedCartonInProducts}
                   //column
                   column={columnCartonProduct}
                   sortColumn={this.state.sortColumn}
@@ -823,11 +985,11 @@ nextPage = (data) => {
                   indeterminate={indeterminate}
                   checked={checked}
                   //pagination
-                  handleChangePage={this.handleChangePage}
-                  handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={this.state.selectedCarton.products.length} //TO CHANGE
+                  handleChangePage={(dataKey) => this.setState((prevState) => ({...prevState, pageCartonInDetails: dataKey}))}
+                  handleChangeLength={(dataKey) => this.setState((prevState) => ({...prevState, pageCartonInDetailsDispLen: dataKey}))}
+                  displayLength={this.state.pageCartonInDetailsDispLen}
+                  page={this.state.pageCartonInDetails}
+                  total={this.state.selectedCartonInProducts.length} //TO CHANGE
                 />
                 </>
                 )}
@@ -848,7 +1010,6 @@ nextPage = (data) => {
                   <Toolbar
                     data={receiptFilter}
                     primaryButton="Nouveau Carton OUT"
-                    //openModal={this.openModal}
                     importModal={() => this.openModal('carton_out')}
                   />)}
                   {(indeterminate || checked) && (
@@ -878,14 +1039,21 @@ nextPage = (data) => {
                   placeholder="Rechercher par carton, whout..."
                   dataFilter={filterCarton}
                   onAutocompleteInputChange={this.onCartonsOutAutocompleteChange}
-                  //search
-                  dataSearch={cartonsOutList.map(item => ({value: item.cartonOut, label: item.cartonOut}))} //TO DO, autocomplete data
                   onFilter={this.onHandleCartonsOutFilterChange}
                 />
+
+                <FormGroup controlId="radioList">
+                  <ControlLabel>Filtrer par: </ControlLabel>
+                  <RadioGroup value={this.state.cartonOutFilterType} name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, cartonOutFilterType: v}))} inline>
+                    <Radio value="cartonout_ref" checked={true}>Ref carton</Radio>
+                    <Radio value="cartonout_whout">Ref whout</Radio>
+                  </RadioGroup>
+                </FormGroup>
+
                 <DataTable
-                  data={this.sortData(this.nextPage(cartonsOutList))}
+                  data={this.sortData(this.state.cartonsOutList)}
                   onRowClick={this.handleAction}
-                  onDetails={this.onDetailsSelect}
+                  onDetails={this.onCartonOutDetailsSelect}
                   //column
                   column={columnCartonOut}
                   sortColumn={this.state.sortColumn}
@@ -901,37 +1069,31 @@ nextPage = (data) => {
                    //pagination
                    handleChangePage={this.handleChangePage}
                    handleChangeLength={this.handleChangeLength}
-                   displayLength={this.state.displayLength}
-                   page={this.state.page}
-                   total={cartonsOutList.length}
+                   displayLength={this.state.cartonsOutPageDispLen}
+                   page={this.state.pageCartonsOut}
+                   total={this.state.cartonsOutTotal}
                    //edit et action cell
                    moreActions={this.state.moreActions}
-                   plusActions={false}
                 />
                 </>
                 )}
-                {onRowClicked && (
+                { onRowClicked && (this.state.selectedCartonOutInfo && this.state.selectedCartonOutProducts) && (
                   <>
                     <ToolbarDrawer
                       label="Tous Mes Cartons"
                       onBackButton={() => this.backTo('allCarton')}
-                      primaryButton="Télécharger"
-                      onCartonHistorique={() => this.toggleDrawer('right')}
                     />
                     <HeaderTitleCarton
                       style={{paddingTop: '0px !important'}}
                       className="table-toolbar header-tag"
-                      title={this.state.selectedCarton.cartonOut}
-                      status={this.state.selectedCarton.statut}
-                      //place={this.state.selectedCarton.place ? this.state.selectedCarton.place : "Pas encore de place attribuée" }
+                      title={this.state.selectedCartonOutInfo.cartonOut}
+                      status={this.state.selectedCartonOutInfo.statut}
                     />
-                  <CustomFilter
+                  {/* <CustomFilter
                     style={{paddingTop: '0px !important'}}
-                    //data={}
-                    //onFilter={}
-                  />
+                  /> */}
                   <DataTable
-                    data={this.state.selectedCarton.products}
+                    data={this.state.selectedCartonOutProducts}
                     //column
                     column={columnCartonProduct}
                     sortColumn={this.state.sortColumn}
@@ -945,11 +1107,11 @@ nextPage = (data) => {
                     indeterminate={indeterminate}
                     checked={checked}
                     //pagination
-                    handleChangePage={this.handleChangePage}
-                    handleChangeLength={this.handleChangeLength}
-                    displayLength={this.state.displayLength}
-                    page={this.state.page}
-                    total={this.state.cartonsList.length} //TO CHANGE
+                    handleChangePage={(dataKey) => this.setState((prevState) => ({...prevState, pageCartonOutDetails: dataKey}))}
+                    handleChangeLength={(dataKey) => this.setState((prevState) => ({...prevState, pageCartonOutDetailsDispLen: dataKey}))}
+                    displayLength={this.state.pageCartonOutDetailsDispLen}
+                    page={this.state.pageCartonOutDetails}
+                    total={this.state.selectedCartonOutProducts.length}
                   />
                   </>
                   )}
@@ -967,11 +1129,20 @@ nextPage = (data) => {
                 <CustomFilter
                   placeholder="Rechercher par whmov, carton, place..."
                   onAutocompleteInputChange={this.onHistoryAutocompleteChange}
-                  //data={}
-                  //onFilter={}
                 />
+
+                <FormGroup controlId="radioList">
+                    <ControlLabel>Filtrer par: </ControlLabel>
+                    <RadioGroup value={this.state.historyFilterType} name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, historyFilterType: v}))} inline>
+                      <Radio value="whmov_ref" checked={true}>Ref déplacement</Radio>
+                      <Radio value="whmov_carton">Ref carton</Radio>
+                      <Radio value="whmov_old_place">Emplacement initial</Radio>
+                      <Radio value="whmov_new_place">Emplacement final</Radio>
+                    </RadioGroup>
+                  </FormGroup>
+
                 <DataTable
-                  data={this.sortData(this.nextPage(cartonsHistoryList))}
+                  data={this.sortData(this.state.cartonMoveHistory)}
                   //column
                   column={columnHistorique}
                   sortColumn={this.state.sortColumn}
@@ -987,9 +1158,9 @@ nextPage = (data) => {
                    //pagination
                    handleChangePage={this.handleChangePage}
                    handleChangeLength={this.handleChangeLength}
-                   displayLength={this.state.displayLength}
-                   page={this.state.page}
-                   total={cartonsHistoryList.length}
+                   displayLength={this.state.historyPageDispLen}
+                   page={this.state.pageHistory}
+                   total={this.state.historyTotal}
                    //edit et action cell
                    moreActions={this.state.moreActions}
                 />
@@ -1059,7 +1230,7 @@ nextPage = (data) => {
                   onHide={() => this.closeModal('cartonHistorique')}
                 >
                   <CartonHistoriqueDrawer
-                    moveHistory={this.state.selectedCarton ? this.state.selectedCarton.moveHistory : []}
+                    moveHistory={this.state.selectedCartonHistory ? this.state.selectedCartonHistory : []}
                     columnHistorique={columnCartonHistorique}
                     closeModal={() => this.closeModal('cartonHistorique')}
                   />

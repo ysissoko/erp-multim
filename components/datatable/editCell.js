@@ -22,5 +22,5 @@ const EditCell = ({ rowData, dataKey, editing, onChange, ...props }) => {
       </Cell>
     );
   };
-  
+
   export default EditCell;

@@ -57,14 +57,6 @@ class CustomWhisper extends Component {
 }
 
 const ActionCell = ({ rowData, dataKey, onClick, onRowClick, editing, moreActions, plusActions, ...props }) => {
-
-  function handleAction() {
-    console.log(`id:${rowData[dataKey]}`);
-    console.log(JSON.stringify(rowData));
-    console.log(dataKey === "operation");
-  }
-
-
   return (
     <Cell {...props} className="link-group" style={{ padding: '6px 0' }}>
     {editing && (

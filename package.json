@@ -8,14 +8,20 @@
     "start": "next start -p $PORT"
   },
   "dependencies": {
+    "@nestjsx/crud-request": "^4.6.2",
     "@zeit/next-less": "^1.0.1",
+    "axios": "^0.21.0",
     "bwip-js": "^2.0.6",
     "jspdf": "^1.5.3",
     "jwt-decode": "^2.2.0",
     "less": "^3.11.1",
-    "next": "9.3.2",
+    "next": "^10.0.1",
     "react": "16.13.1",
     "react-dom": "16.13.1",
-    "rsuite": "^4.3.3"
+    "rsuite": "^4.3.3",
+    "xlsx": "^0.16.8"
+  },
+  "devDependencies": {
+    "file-loader": "^6.2.0"
   }
 }

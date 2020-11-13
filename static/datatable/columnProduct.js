@@ -64,6 +64,15 @@ export default [
         datakey: "quantity",
         width: 100,
         sortable: true,
+        resizable: true,
+        editable: true
+    },
+    {
+        key: 7,
+        text: "Action",
+        datakey: "action",
+        width: 100,
+        sortable: false,
         resizable: true
-    }
+    },
 ];

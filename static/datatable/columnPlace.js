@@ -15,7 +15,8 @@ export default [
         datakey: "place",
         width: 800,
         sortable: true,
-        resizable: true
+        resizable: true,
+        editable: true
     },
     {
         key: 7,

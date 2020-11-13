@@ -10,21 +10,21 @@ import { ButtonToolbar, IconButton, Icon, Button } from 'rsuite';
 const ToolbarDrawer = ({ data, onBackButton, label, onDownload, onFilter, importModal, primaryButton, onCartonHistorique}) => (
   <>
     <div className="table-toolbar">
-          <BackButton
-            className="inner-left"
-            label={label}
-            onClick={onBackButton}
-          />
-          <ButtonToolbar className="inner-right">
-          <Button
-            appearance="default"
-            onClick={onCartonHistorique}>
-            <Icon 
-              icon="history"
-              style={{marginRight: '5px'}}/> 
-            Historique
-          </Button>
-        <Button
+        <BackButton
+          className="inner-left"
+          label={label}
+          onClick={onBackButton}
+        />
+        <ButtonToolbar className="inner-right">
+        {onCartonHistorique && (<Button
+          appearance="default"
+          onClick={onCartonHistorique}>
+          <Icon 
+            icon="history"
+            style={{marginRight: '5px'}}/> 
+          Historique
+        </Button>)}
+        {onDownload && (<Button
           color="green"
           appearance="default"
           onClick={onDownload}>
@@ -32,7 +32,7 @@ const ToolbarDrawer = ({ data, onBackButton, label, onDownload, onFilter, import
             icon="file-excel-o"
             style={{marginRight: '10px'}}/> 
           {primaryButton}
-        </Button>
+        </Button>)}
     </ButtonToolbar>
   </div>
 </>

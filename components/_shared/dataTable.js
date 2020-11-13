@@ -66,14 +66,8 @@ const DataTable = ({
                             <ActionCell dataKey="id" onRowClick={onRowClick} onClick={handleEditState} editing={editing} moreActions={moreActions} />
                         : c.datakey === "id"
                         ?   <CheckCell dataKey="id" disabled={c.disabled} checkedKeys={checkedKeys} onChange={handleCheck}/>
-                        : c.datakey === "place"
-                        ? <EditCell dataKey="place" onChange={handleChange}/>
-                        : c.datakey === "marque"
-                        ? <EditCell dataKey="marque" onChange={handleChange}/>
-                        : c.datakey === "supply"
-                        ? <EditCell dataKey="supply" onChange={handleChange}/>
-                        : (c.datakey === "product" && c.key === 2)
-                        ? <EditCell dataKey="product" onChange={handleChange}/>
+                        : c.editable === true
+                        ? <EditCell dataKey={c.datakey} onChange={handleChange}/>
                         : <Cell dataKey={c.datakey}/>
                     }
                     </Column>

@@ -15,7 +15,8 @@ export default [
         datakey: "marque",
         width: 600,
         sortable: true,
-        resizable: true
+        resizable: true,
+        editable: true
     },
     {
         key: 3,
@@ -26,7 +27,7 @@ export default [
         resizable: true
     },
     {
-        key: 7,
+        key: 4,
         text: "Action",
         datakey: "action",
         width: 200,

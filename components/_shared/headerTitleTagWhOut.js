@@ -20,7 +20,7 @@ const HeaderTitleTagWhOut = ({ delivery, label }) => (
             <List size='sm'>
                 {label.map((l) =>
                 <List.Item key={l.datakey} index={l}>
-                    <h7>{l.text}</h7>
+                    <h6>{l.text}</h6>
                     <h6 style={{fontWeight:'normal'}}>
                         {l.datakey === "batch" ? delivery.batch.refCode
                         : l.datakey === "orderNum" ? delivery.orderNum

@@ -44,13 +44,16 @@ import filterReceipt from "../static/datatable/filterReceipt";
 import filterDelivery from "../static/datatable/filterDelivery";
 
 
-import {ProviderService, WhInOpService, CartonInService, WhOutOpService, CartonOutService} from "../services/main.bundle"
+import {ProviderService, WhInOpService, CartonInService, WhOutOpService, CartonOutService} from "../services/main"
 import {getFormattedDate, getTagByDeliveryStatus, getTagByReceiptStatus} from "../utils/date"
 import CustomTagFilter from '../components/datatable/customTagFilter';
 import HeaderTitleTagWhOut from '../components/_shared/headerTitleTagWhOut';
-import { Router } from 'next/router';
+import Router from 'next/router';
 import { getToken}  from "../utils/token"
+import {getPaginatedData} from '../utils/pagination'
 import {exportWhOutToPdf} from "../utils/whout-export-pdf"
+
+const AUTOCOMPLETE_TIMEOUT = 700;
 
 class Operation extends Component {
 
@@ -58,7 +61,12 @@ class Operation extends Component {
   {
     super(props);
 
+    this.whOutAutocompleteTimeout = null;
+    this.whInAutocompleteTimeout = null;
+
     this.state = {
+      resetReceipts: false,
+      resetDeliveries: false,
       show: false,
       receipt:true,
       moreActions: true, //actionCell
@@ -89,9 +97,16 @@ class Operation extends Component {
       delivery: false, //show navbar
       delete: false,  //delete confirm modal
       checkedKeys: [], //checkbox
-      displayLength: 100, //pagination
+      whInPageDispLen: 100, //pagination
+      whOutPageDispLen: 100, //pagination
+      whInDetailsDispLen: 100,
       loading: false, //pagination
-      page: 1, //pagination
+      pageWhIn: 1, //pagination
+      pageWhOut: 1, //pagination
+      pageWhInDetail: 1,
+      whOutTotal: 0, //pagination
+      whInTotal: 0, //pagination
+      whInCartonsTotal: 0,
       dateRangeFilterWhIn: undefined,
       dateRangeFilterWhOut: undefined,
       dateRangeFilterCartonOut: undefined,
@@ -118,10 +133,10 @@ class Operation extends Component {
     this.handleConfirm = this.handleConfirm.bind(this);
     this.handleConfirmMissingWhoutExport = this.handleConfirmMissingWhoutExport.bind(this);
     this.handleConfirmMissingWhoutClassicExport = this.handleConfirmMissingWhoutClassicExport.bind(this);
-    // this.handleExportMultipleWhOutToExcel = this.handleExportMultipleWhOutToExcel.bind(this);
     this.handleExportSortedChange = this.handleExportSortedChange.bind(this);
+    this.handleWhInDetailsChangePage = this.handleWhInDetailsChangePage.bind(this);
+    this.handleWhInDetailsChangeLength = this.handleWhInDetailsChangeLength.bind(this);
     this.handleDownloadPdf = this.handleDownloadPdf.bind(this);
-
     this.onWhOutDateClean = this.onWhOutDateClean.bind(this);
     this.onWhInDateClean = this.onWhInDateClean.bind(this);
     this.onWhInFilter = this.onWhInFilter.bind(this);
@@ -145,7 +160,6 @@ class Operation extends Component {
   handleDownloadPdf()
   {
     console.log("download as pdf")
-    console.log(this.state.selectedDelivery);
     exportWhOutToPdf(this.state.selectedDelivery);
   }
 
@@ -307,15 +321,10 @@ class Operation extends Component {
     this.setState((prevState) => ({...prevState, whInRefCodeToCreate: `WHIN${invoiceNumber}`}));
 
     //control if input null, disabled the button
-    if(invoiceNumber === '') {
-      this.setState({
-        activeButton: false
-      })
-    } else {
-      this.setState({
-        activeButton: true
-      })
-    }
+    if(invoiceNumber === '')
+      this.setState({ activeButton: false })
+    else
+      this.setState({ activeButton: true })
   }
 
   refreshProvidersList()
@@ -330,19 +339,28 @@ class Operation extends Component {
     this.setState({
       loading: true
     });
-    this.whInOpService.readAll().then((response) => {
+
+    this.whInOpService.filterWhIn({
+      searchTerm: this.state.whInSearchTerm,
+      dateRange: (this.state.dateRangeFilterWhIn) ? this.state.dateRangeFilterWhIn.map(d => d.toISOString()) : undefined,
+      statusTags: this.state.whInStatusFilters,
+      page: this.state.pageWhIn,
+      limit: this.state.whInPageDispLen
+    }).then(response => {
+      const pages = response.data;
+
       this.setState((prevState) => ({...prevState,
         loading: false,
-        rawReceiptList: response.data,
-        receiptList: response.data.map(receipt => ({id: receipt.id,
+        rawReceiptList: pages.data,
+        whInTotal: pages.total,
+        receiptList: pages.data.map(receipt => ({id: receipt.id,
           statut: getTagByReceiptStatus(receipt.status),
           operation: receipt.refCode,
           date: getFormattedDate(receipt.createdAt),
           rawDate: new Date(receipt.createdAt),
-          carton: receipt.cartons,
-          products: this.getReceiptProductsTotalCount(receipt)})
+          products: receipt.productsCount })
       )}));
-    }, error => Alert.warning(error.message, 2000));
+    }).catch(e => console.log(error));
   }
 
   refreshWhOutList()
@@ -350,17 +368,26 @@ class Operation extends Component {
     this.setState({
       loading: true
     });
-    this.whOutService.readAll().then((response) => {
+
+    this.whOutService.filterWhOut({
+      searchTerm: this.state.whOutSearchTerm,
+      dateRange: (this.state.dateRangeFilterWhOut) ? this.state.dateRangeFilterWhOut.map(d => d.toISOString()) : undefined,
+      statusTags: this.state.whOutStatusFilters,
+      page: this.state.pageWhOut,
+      limit: this.state.whOutPageDispLen
+    }).then(response => {
+      const pages = response.data;
       this.setState((prevState) => ({...prevState,
         loading: false,
-        rawDeliveryList: response.data,
-        deliveriesList: response.data.map(delivery => ({
+        rawDeliveryList: pages.data,
+        whOutTotal: pages.total,
+        deliveriesList: pages.data.map(delivery => ({
           id: delivery.id,
           operation: delivery.refCode,
           date: getFormattedDate(delivery.createdAt),
           statut: getTagByDeliveryStatus(delivery.status),
-          products: this.getDeliveryProductsTotalCount(delivery),
-          productsToScan: this.getDeliveryToScanProductsTotalCount(delivery),
+          products: delivery.productsCountScanned,
+          productsToScan: delivery.productsCountNeeded,
           batch: delivery.batch.refCode, // Dans le cas du classique pas de
           orderNum: delivery.orderNum,
           rawDate: new Date(delivery.createdAt),
@@ -372,33 +399,8 @@ class Operation extends Component {
           city: delivery.clientCity,
           country: delivery.clientCountry,
           carton: delivery.cartons })
-          )}));
-    } , error => Alert.warning(error.message, 2000));
-  }
-
-  // Sum of all products contains into wh in operation cartons
-  getReceiptProductsTotalCount(receipt)
-  {
-    if (!receipt.cartons || receipt.cartons.length == 0)
-      return 0;
-
-    let sumProducts = 0;
-    receipt.cartons.forEach((carton) => carton.productsInStock.forEach((product) => sumProducts += product.initialQuantity));
-    return sumProducts;
-  }
-
-  getDeliveryProductsTotalCount(delivery)
-  {
-    let sumProducts = 0;
-    delivery.productsOutStock.forEach((productOutStock) =>  sumProducts += productOutStock.quantityScanned);
-    return sumProducts;
-  }
-
-  getDeliveryToScanProductsTotalCount(delivery)
-  {
-    let sumProducts = 0;
-    delivery.productsOutStock.forEach((productOutStock) =>  sumProducts += productOutStock.quantityNeeded);
-    return sumProducts;
+        )}));
+    }).catch(e => console.log(error));
   }
 
   componentDidMount()
@@ -419,6 +421,35 @@ class Operation extends Component {
     this.refreshWhOutList();
   }
 
+  componentDidUpdate(prevProps, prevState)
+  {
+    if (this.state.pageWhIn != prevState.pageWhIn
+      || this.state.whInPageDispLen != prevState.whInPageDispLen
+      || this.state.whInSearchTerm != prevState.whInSearchTerm
+      || this.state.whInStatusFilters != prevState.whInStatusFilters
+      || this.state.dateRangeFilterWhIn != prevState.dateRangeFilterWhIn)
+      {
+        this.refreshWhInList();
+      }
+      
+
+    if (this.state.pageWhOut != prevState.pageWhOut 
+      || this.state.whOutPageDispLen != prevState.whOutPageDispLen
+      || this.state.whOutSearchTerm != prevState.whOutSearchTerm
+      || this.state.whOutStatusFilters != prevState.whOutStatusFilters
+      || this.state.dateRangeFilterWhOut != prevState.dateRangeFilterWhOut)
+      this.refreshWhOutList();
+  }
+
+  componentWillUnmount()
+  {
+    if (this.whOutAutocompleteTimeout)
+      clearTimeout(this.whOutAutocompleteTimeout)
+      
+    if (this.whInAutocompleteTimeout)
+      clearTimeout(this.whInAutocompleteTimeout)
+  }
+
   //MODAL
   openModal(type) {
     switch (type) {
@@ -434,8 +465,11 @@ class Operation extends Component {
       case 'delete' :
         this.setState({delete: !this.state.show});
       break;
-      case 'reset' :
-        this.setState({reset: !this.state.show});
+      case 'reset_receipts' :
+        this.setState({resetReceipts: !this.state.show});
+      break;
+      case 'reset_deliveries' :
+        this.setState({resetDeliveries: !this.state.show});
       break;
       case 'export' :
         this.setState({export: !this.state.show});
@@ -464,6 +498,9 @@ class Operation extends Component {
       case 'reset_receipts':
         this.resetReceipts();
       break;
+      case 'reset_deliveries':
+        this.resetDeliveries();
+      break;
       case 'export':
         this.exportDeliveries();
         break;
@@ -474,6 +511,8 @@ class Operation extends Component {
         this.handleConfirmMissingWhoutClassicExport()
         break;
     };
+
+    this.closeModal(type);
   }
 
   /**
@@ -482,6 +521,11 @@ class Operation extends Component {
   resetReceipts()
   {
     this.resetMultipleOperationsStatus(this.whInOpService, this.refreshWhInList.bind(this));
+  }
+
+  resetDeliveries()
+  {
+    this.resetMultipleOperationsStatus(this.whOutService, this.refreshWhOutList.bind(this));
   }
 
   closeModal(type) {
@@ -498,8 +542,11 @@ class Operation extends Component {
       case 'delete' :
         this.setState({delete: this.state.show});
         break;
-      case 'reset' :
-        this.setState({reset: this.state.show});
+      case 'reset_receipts' :
+        this.setState({resetReceipts: this.state.show});
+        break;
+      case 'reset_deliveries' :
+        this.setState({resetDeliveries: this.state.show});
         break;
       case 'export' :
         this.setState({export: this.state.show});
@@ -545,13 +592,13 @@ class Operation extends Component {
       onRowClicked: true,
       checkedKeys: [] //reset checkbox
     });
-}
+  }
 
   //CHECKBOX
   // TO DO : CHANGE DATA "receiptList"
   handleCheckAll = (value, checked) => {
-    const checkedKeys = (checked && this.state.active === 1) ? this.applyFiltersToReceiptsList(this.state.receiptList).map(item => item.id)
-    : (checked && this.state.active === 2) ? this.applyFiltersToDeliveriesList(this.state.deliveriesList).map(item => item.id)
+    const checkedKeys = (checked && this.state.active === 1) ? this.state.receiptList.map(item => item.id)
+    : (checked && this.state.active === 2) ? this.state.deliveriesList.map(item => item.id)
     : [];
     this.setState({
       checkedKeys
@@ -665,6 +712,7 @@ class Operation extends Component {
       });
     }, 500);
   }
+
   sortData = (data) => {
     const {sortColumn, sortType } = this.state;
       if (sortColumn && sortType) {
@@ -687,18 +735,16 @@ class Operation extends Component {
       return data;
   }
 
-  //FILTER
-  // TO DO
+
   onWhInFilter = (whInStatusFilters) => {
       this.setState(prevState => ({...prevState, whInStatusFilters: whInStatusFilters}));
   }
 
-  onWhOutFilter = (value, item) => {
-      this.setState(prevState => ({...prevState, whOutStatusFilters: [...this.state.whOutStatusFilters, item]}));
+  onWhOutFilter = (whOutStatusFilters) => {
+    console.log(whOutStatusFilters)
+      this.setState(prevState => ({...prevState, whOutStatusFilters: whOutStatusFilters}));
   }
 
-  // DATE PICKER
-  //TO DO
   onWhOutDateFilter = (dateRange) => {
     console.log("WH out filter date")
       this.setState(prevState => ({...prevState, dateRangeFilterWhOut: dateRange}))
@@ -714,62 +760,6 @@ class Operation extends Component {
     this.setState(prevState => ({...prevState, dateRangeFilterWhIn: dateRange}))
   }
 
-  applyFiltersToDeliveriesList(deliveriesList)
-  {
-    let filteredDeliveriesList = deliveriesList;
-
-    if (this.state.dateRangeFilterWhOut && this.state.dateRangeFilterWhOut.length === 2){
-      filteredDeliveriesList = filteredDeliveriesList.filter(operation => operation.rawDate >= this.state.dateRangeFilterWhOut[0] && operation.rawDate <= this.state.dateRangeFilterWhOut[1]);
-    }
-
-    if (this.state.whOutSearchTerm) {
-      filteredDeliveriesList = filteredDeliveriesList.filter(delivery => delivery.operation.includes(this.state.whOutSearchTerm.toUpperCase()) ||
-                                                                        delivery.batch.includes(this.state.whOutSearchTerm.toUpperCase()));
-    }
-
-    if (this.state.whOutStatusFilters && this.state.whOutStatusFilters.length > 0)
-    {
-      let statusTagsFilters = [];
-      let typeTagsFilters = [];
-
-      this.state.whOutStatusFilters.filter(filter => filter.role === "Statut").forEach(filter => statusTagsFilters.push(filter.value));
-      this.state.whOutStatusFilters.filter(filter => filter.role === "Type").forEach(filter => typeTagsFilters.push(filter.value));
-
-      if (statusTagsFilters.length > 0)
-      {
-        filteredDeliveriesList = filteredDeliveriesList.filter(delivery => statusTagsFilters.indexOf(delivery.statut) >= 0);
-      }
-
-      if (typeTagsFilters.length > 0)
-      {
-        filteredDeliveriesList = filteredDeliveriesList.filter(delivery => typeTagsFilters.indexOf(delivery.type) >= 0);
-      }
-    }
-
-    return filteredDeliveriesList;
-  }
-
-  applyFiltersToReceiptsList(receiptsList)
-  {
-    let filteredReceiptsList = receiptsList;
-
-    if (this.state.dateRangeFilterWhIn){
-      filteredReceiptsList = receiptsList.filter(operation => operation.rawDate >= this.state.dateRangeFilterWhIn[0] && operation.rawDate <= this.state.dateRangeFilterWhIn[1]);
-    }
-
-    if (this.state.whInStatusFilters && this.state.whInStatusFilters.length > 0)
-    {
-      filteredReceiptsList = filteredReceiptsList.filter(operation => this.state.whInStatusFilters.indexOf(operation.statut) !== -1)
-    }
-
-    if (this.state.whInSearchTerm)
-    {
-      filteredReceiptsList = filteredReceiptsList.filter(receipt => receipt.operation.includes(this.state.whInSearchTerm.toUpperCase()))
-    }
-
-    return filteredReceiptsList;
-  }
-
   onReceiptDetailsSelect = (value) => {
 
     const selectedReceipt = this.state.rawReceiptList.find(receipt => receipt.refCode === value.operation);
@@ -780,14 +770,16 @@ class Operation extends Component {
 
     let selectedWhInProductListDetails = [];
 
-    selectedReceipt.cartons.forEach((carton) => {
-      carton.productsInStock.forEach((productInStock) => {
-        selectedWhInProductListDetails.push({carton: carton.refCode, product: productInStock.product.refCode, quantity: productInStock.quantity, barcode: productInStock.product.eanCode, place: carton.place.refCode });
-    })})
+    this.whInOpService.getWhInInfo(selectedReceipt.refCode).then((response) => {
+      response.data.cartons.forEach((carton) => {
+          carton.productsInStock.forEach((productInStock) => {
+            selectedWhInProductListDetails.push({carton: carton.refCode, product: productInStock.product.refCode, quantity: productInStock.quantity, barcode: productInStock.product.eanCode, place: carton.place.refCode });
+        })})
 
-    this.setState(prevState => {
-      return {...prevState, selectedWhInProductListDetails: selectedWhInProductListDetails}
-    })
+        this.setState(prevState => {
+        return {...prevState, selectedWhInProductListDetails: selectedWhInProductListDetails}
+      })
+    }, error => console.error(error))
   }
 
   //Details Pages
@@ -799,133 +791,148 @@ class Operation extends Component {
 
     if (selectedDelivery)
     {
-      console.log(selectedDelivery)
-      if (selectedDelivery.type === "classic")
-      {
-        if (selectedDelivery.cartonsOut)
+
+      this.setState(prevState => {
+        return {...prevState, selectedDelivery: selectedDelivery}
+      });
+
+      this.whOutService.getWhOutInfo(selectedDelivery.refCode).then(response => {
+        const delivery = response.data;
+        console.log(delivery)
+        if (delivery.type === "classic")
         {
-          selectedDelivery.cartonsOut.forEach((cartonOut) => {
-            let treeData = {
-              id: cartonOut.id,
-              cartonOut: cartonOut.refCode,
-              children: []
-            };
-
-            cartonOut.productsOutClassic.forEach((productOutClassic) => {
-              const productOutStock = selectedDelivery.productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id);
-
-              if (productOutStock)
-              {
-                treeData.children.push({
-                  id: productOutStock.id,
-                  carton: productOutStock.cartonIn.refCode,
-                  place: productOutStock.cartonIn.place.refCode,
-                  product: productOutStock.product.refCode,
-                  quantityNeeded: productOutStock.quantityNeeded,
-                  quantityScanned: productOutClassic.quantity
-                })
-              }
+          if (delivery.cartonsOut)
+          {
+            delivery.cartonsOut.forEach((cartonOut) => {
+              let treeData = {
+                id: cartonOut.id,
+                cartonOut: cartonOut.refCode,
+                children: []
+              };
+  
+              cartonOut.productsOutClassic.forEach((productOutClassic) => {
+                const productOutStock = delivery.productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id);
+  
+                if (productOutStock)
+                {
+                  treeData.children.push({
+                    id: productOutStock.id,
+                    carton: productOutStock.cartonIn.refCode,
+                    place: productOutStock.cartonIn.place.refCode,
+                    product: productOutStock.product.refCode,
+                    quantityNeeded: productOutStock.quantityNeeded,
+                    quantityScanned: productOutClassic.quantity
+                  })
+                }
+              })
+  
+              selectedWhOutClassicProductListDetails.push(treeData);
             })
+          }
+  
+          // Affichage des products out classic sans cartons
+  
+          let treeDataNotPlacedProducts = {
+            id: -1,
+            cartonOut: "A SCANNER",
+            children: []
+          };
 
-            selectedWhOutClassicProductListDetails.push(treeData);
-          })
-        }
-
-        // Affichage des products out classic sans cartons
-
-        let treeDataNotPlacedProducts = {
-          id: -1,
-          cartonOut: "A SCANNER",
-          children: []
-        };
-
-        selectedDelivery.productsOutStock
-        .filter(productOutStock => !productOutStock.scanned)
-        .map(productOutStock => {
-            treeDataNotPlacedProducts.children.push({
-            id: productOutStock.id,
-            carton: productOutStock.cartonIn.refCode,
-            place: productOutStock.cartonIn.place.refCode,
-            product: productOutStock.product.refCode,
-            quantityNeeded: productOutStock.quantityNeeded,
-            quantityScanned: 0
-          })
-        })
-
-        selectedWhOutClassicProductListDetails.push(treeDataNotPlacedProducts);
-      } else {
-          selectedDelivery.productsOutStock.forEach((productOutStock) => {
-            selectedWhOutProductListDetails.push({
+          delivery.productsOutStock
+          .filter(productOutStock => !productOutStock.scanned && productOutStock.quantityScanned != productOutStock.quantityNeeded)
+          .map(productOutStock => {
+              treeDataNotPlacedProducts.children.push({
+              id: productOutStock.id,
               carton: productOutStock.cartonIn.refCode,
-              product: productOutStock.product.refCode,
               place: productOutStock.cartonIn.place.refCode,
-              quantityScanned: productOutStock.quantityScanned,
-              quantityNeeded: productOutStock.quantityNeeded
-            });
-        })
-      }
-    }
+              product: productOutStock.product.refCode,
+              quantityNeeded: productOutStock.quantityNeeded,
+              quantityScanned: productOutStock.quantityScanned
+            })
+          })
+          
+          if (treeDataNotPlacedProducts.length > 0)
+            selectedWhOutClassicProductListDetails.push(treeDataNotPlacedProducts);
 
-    this.setState(prevState => {
-      return {...prevState, selectedDelivery: selectedDelivery, selectedWhOutProductListDetails: selectedWhOutProductListDetails, selectedWhOutClassicProductListDetails: selectedWhOutClassicProductListDetails}
-    });
+          this.setState(prevState => {
+            return {...prevState, selectedWhOutClassicProductListDetails: selectedWhOutClassicProductListDetails}
+          });
+        } else {
+            delivery.productsOutStock.forEach((productOutStock) => {
+              selectedWhOutProductListDetails.push({
+                carton: productOutStock.cartonIn.refCode,
+                product: productOutStock.product.refCode,
+                place: productOutStock.cartonIn.place.refCode,
+                quantityScanned: productOutStock.quantityScanned,
+                quantityNeeded: productOutStock.quantityNeeded
+              });
+          })
+
+          this.setState(prevState => {
+            return {...prevState, selectedWhOutProductListDetails: selectedWhOutProductListDetails}
+          });
+        }
+      }, error => console.error(error))
+    }
   }
 
   onWhOutFilterChange(values)
   {
     console.log(values);
-    if (values)
-    {
-      this.setState(prevState => ({whOutStatusFilters: prevState.whOutStatusFilters.filter(whOutFilterItem => values.indexOf(whOutFilterItem.value) !== -1)}));
-    } else {
-      this.setState(prevState => ({...prevState, whOutStatusFilters: []}));
-    }
+    this.setState(prevState => ({...prevState, whOutStatusFilters: values}))
   }
 
   //PAGINATION
   handleChangePage = (dataKey) => {
-    this.setState({
-      page: dataKey
-    });
+
+    if (this.state.active === 1)
+    {
+      this.setState({ pageWhIn: dataKey });
+    }
+
+    if (this.state.active === 2)
+    {
+      this.setState({ pageWhOut: dataKey });
+    }
   }
+
+  handleWhInDetailsChangePage(dataKey)
+  {
+    this.setState({pageWhInDetail: dataKey});
+  }
+
   handleChangeLength = (dataKey) => {
-    this.setState({
-      page: 1,
-      displayLength: dataKey
-    });
+    if (this.state.active === 1)
+      this.setState({pageWhIn: 1, whInPageDispLen: dataKey });
+    
+      if (this.state.active === 2)
+      this.setState({pageWhOut: 1, whOutPageDispLen: dataKey });
   }
-  nextPage = (data) => {
-    const { displayLength, page } = this.state;
-      if (displayLength && page ) {
-          return data.filter((v, i) => {
-          const start = displayLength * (page - 1);
-          const end = start + displayLength;
-            return i >= start && i < end;
-        });
-      }
+
+  handleWhInDetailsChangeLength(dataKey)
+  {
+    this.setState({whInDetailsDispLen: dataKey});
   }
 
   onWhInAutocompleteInputChange(searchTerm)
   {
-    this.setState(prevState => ({...prevState, whInSearchTerm: searchTerm}));
+    if (this.whInAutocompleteTimeout)
+      clearTimeout(this.whInAutocompleteTimeout);
+
+    this.whInAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, whInSearchTerm: searchTerm}));
+    }, AUTOCOMPLETE_TIMEOUT);
   }
 
   onWhOutAutocompleteInputChange(searchTerm)
   {
-    this.setState(prevState => ({...prevState, whOutSearchTerm: searchTerm}));
-  }
+    if (this.whOutAutocompleteTimeout)
+      clearTimeout(this.whOutAutocompleteTimeout);
 
-  //TREE DATATABLE
-  onExpandChange = (isOpen, rowData) => {
-
+    this.whOutAutocompleteTimeout = setTimeout(() => {
+      this.setState(prevState => ({...prevState, whOutSearchTerm: searchTerm}));
+    }, AUTOCOMPLETE_TIMEOUT);
   }
-  // renderTreeToggle = (icon, rowData) => {
-  //   console.log("rowDatarowDatarowData", rowData);
-  //   if (rowData.children && rowData.children.length === 0) {
-  //     return <Icon icon="spinner" spin />;
-  //   }
-  //   return icon;
-  // }
 
   exportDeliveries()
   {
@@ -952,10 +959,6 @@ class Operation extends Component {
     } else if (checkedKeys.length > 0 && checkedKeys.length < ((currentNav === 1 && this.state.receiptList.length) || (currentNav === 2 && this.state.deliveriesList.length))) {
       indeterminate = true;
     }
-
-    // Apply the different filters and return a filtered list (if filters have been selected)
-    let deliveriesList = this.applyFiltersToDeliveriesList(this.state.deliveriesList);
-    let receiptList = this.applyFiltersToReceiptsList(this.state.receiptList);
 
     return (
         <Frame activeKey="1">
@@ -1005,7 +1008,7 @@ class Operation extends Component {
                       color="cyan"
                       icon={<Icon icon="reload" />}
                       appearance="primary"
-                      onClick={() => this.openModal('reset')}
+                      onClick={() => this.openModal('reset_receipts')}
                     />
                     </>
                   )}
@@ -1013,7 +1016,6 @@ class Operation extends Component {
                 <CustomTagFilter
                     //search
                     placeholder="Rechercher par whin"
-                    dataSearch={receiptList.map(receipt => ({label: receipt.operation, value: receipt.operation}))} //TO DO : mettre la data du tableau
                     //filter by
                     onFilter={this.onWhInFilter}
                     dataFilter={receiptFilter}
@@ -1026,10 +1028,9 @@ class Operation extends Component {
                 <DataTable
                   //loading data
                   loading={this.state.loading}
-                  data={this.sortData(this.nextPage(receiptList))}
+                  data={this.sortData(this.state.receiptList)}
                   onRowClick={this.handleAction}
                   onDetails={this.onReceiptDetailsSelect}
-                  //onRowClick={this.handleAction}
                   //column
                   column={columnReceipt}
                   sortColumn={this.state.sortColumn}
@@ -1045,14 +1046,14 @@ class Operation extends Component {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={receiptList.length}
+                  displayLength={this.state.whInPageDispLen}
+                  page={this.state.pageWhIn}
+                  total={this.state.whInTotal}
                   //edit et action cell
                   moreActions={this.state.moreActions}
                 />
                 </>)}
-                {onRowClicked && (
+                {onRowClicked && (this.state.selectedWhInProductListDetails) && (
                 <>
                   <ToolbarSmall
                     //data={receiptFilter}
@@ -1071,7 +1072,7 @@ class Operation extends Component {
                   />
                 <DataTable
                   //TO DO : ADD DATA
-                  data={this.sortData(this.nextPage((this.state.selectedWhInProductListDetails)))}
+                  data={this.sortData(getPaginatedData(this.state.pageWhInDetail, this.state.whInDetailsDispLen, this.state.selectedWhInProductListDetails))}
                   //column
                   column={columnWHIN}
                   sortColumn={this.state.sortColumn}
@@ -1085,10 +1086,10 @@ class Operation extends Component {
                   indeterminate={indeterminate}
                   checked={checked}
                   //pagination
-                  handleChangePage={this.handleChangePage}
-                  handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
+                  handleChangePage={this.handleWhInDetailsChangePage}
+                  handleChangeLength={this.handleWhInDetailsChangeLength}
+                  displayLength={this.state.whInDetailsDispLen}
+                  page={this.state.pageWhInDetail}
                   total={this.state.selectedWhInProductListDetails.length}
                 />
                 </>
@@ -1109,7 +1110,6 @@ class Operation extends Component {
                   <>
                   <Toolbar
                     primaryButton="Bon de Préparation"
-                    //deleteModal={() => this.openModal('delete')}
                     importModal={() => this.openModal('delivery')}
                     data={receiptFilter}
                   />
@@ -1139,7 +1139,7 @@ class Operation extends Component {
                       color="cyan"
                       icon={<Icon icon="reload" />}
                       appearance="primary"
-                      onClick={() => this.openModal('reset')}
+                      onClick={() => this.openModal('reset_deliveries')}
                     />
                     <IconButton
                       style={{marginTop: '20px', marginRight:'10px'}}
@@ -1153,22 +1153,21 @@ class Operation extends Component {
                     </>
                   )}
                 </div>
+
                 <CustomTagFilter
                   //filter by
-                  //onFilter={this.onWhOutFilter}
                   placeholder="Rechercher par whout"
                   dataFilter={filterDelivery}
                   onAutocompleteInputChange={this.onWhOutAutocompleteInputChange}
-                  dataSearch={deliveriesList.map(delivery => ({value: delivery.operation, label: delivery.operation}))}
-                  //date filter
                   value={this.state.valueDate}
                   onFilterDate={this.onWhOutDateFilter}
                   onDateRangeClean={this.onWhOutDateClean}
                   onSelect={this.onWhOutFilter}
                   onFilter={this.onWhOutFilterChange}
                 />
+
                 <DataTable
-                  data={this.sortData(this.nextPage(deliveriesList))}
+                  data={this.sortData(this.state.deliveriesList)}
                   onRowClick={this.handleAction}
                   onDetails={this.onDeliveryDetailsSelect}
                   //column
@@ -1186,9 +1185,9 @@ class Operation extends Component {
                   //pagination
                   handleChangePage={this.handleChangePage}
                   handleChangeLength={this.handleChangeLength}
-                  displayLength={this.state.displayLength}
-                  page={this.state.page}
-                  total={deliveriesList.length}
+                  displayLength={this.state.whOutPageDispLen}
+                  page={this.state.pageWhOut}
+                  total={this.state.whOutTotal}
                   //edit et action cell
                   moreActions={this.state.moreActions}
                 />
@@ -1312,14 +1311,26 @@ class Operation extends Component {
 
           {/* CONFIRMATION MODAL FOR RESET ACTION */}
           <div className="modal-container">
-            <Modal backdrop="static" show={this.state.reset} onHide={() => this.closeModal('reset')} size="xs" backdrop="static">
+            <Modal backdrop="static" show={this.state.resetReceipts} onHide={() => this.closeModal('reset_receipts')} size="xs" backdrop="static">
               <ResetModal
-                text="Êtes-vous sûr de vouloir réinitialiser l'opération et la remettre au statut"
+                text="Êtes-vous sûr de vouloir réinitialiser l'opération de réception et la remettre au statut"
                 tagStatut={this.state.active === 1 ? "À RÉCEPTIONNER" : "À PRÉPARER" }
                 secondaryButton="Non. Annuler."
                 primaryButton="Oui. Changer le statut."
-                closeModal={() => this.closeModal('reset')}
+                closeModal={() => this.closeModal('reset_receipts')}
                 validateModal={() => this.validateModal('reset_receipts')}
+              />
+            </Modal>
+          </div>
+          <div className="modal-container">
+            <Modal backdrop="static" show={this.state.resetDeliveries} onHide={() => this.closeModal('reset_deliveries')} size="xs" backdrop="static">
+              <ResetModal
+                text="Êtes-vous sûr de vouloir réinitialiser l'opération de livraison et la remettre au statut"
+                tagStatut={this.state.active === 1 ? "À RÉCEPTIONNER" : "À PRÉPARER" }
+                secondaryButton="Non. Annuler."
+                primaryButton="Oui. Changer le statut."
+                closeModal={() => this.closeModal('reset_deliveries')}
+                validateModal={() => this.validateModal('reset_deliveries')}
               />
             </Modal>
           </div>

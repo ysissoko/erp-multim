@@ -15,7 +15,8 @@ export default [
         datakey: "product",
         width: 300,
         sortable: true,
-        resizable: true
+        resizable: true,
+        editable: true
     },
     {
         key: 3,
@@ -47,6 +48,6 @@ export default [
         datakey: "action",
         width: 100,
         sortable: false,
-        resizable: true
+        resizable: false
     }
 ];

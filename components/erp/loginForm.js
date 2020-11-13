@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Form, FormGroup, FormControl, ControlLabel, ButtonToolbar, Button, Schema, Alert  } from 'rsuite';
 import Router from 'next/router';
-import {AuthService} from '../../services/main.bundle';
+import {AuthService} from '../../services/main';
 
 const { StringType } = Schema.Types;
 
