@@ -52,7 +52,7 @@ import { getToken}  from "../utils/token"
 import {getPaginatedData} from '../utils/pagination'
 import {exportWhOutToPdf} from "../utils/whout-export-pdf"
 
-const AUTOCOMPLETE_TIMEOUT = 100;
+const AUTOCOMPLETE_TIMEOUT = 30;
 
 class Operation extends Component {
 

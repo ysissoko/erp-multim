@@ -42,7 +42,7 @@ import CartonHistoriqueDrawer from '../components/modal/cartonHistoriqueDrawer';
 import {getFormattedDate} from "../utils/date";
 import {getToken} from "../utils/token"
 
-const AUTOCOMPLETE_TIMEOUT = 100;
+const AUTOCOMPLETE_TIMEOUT = 30;
 class Stock extends React.Component {
 
   constructor(props)

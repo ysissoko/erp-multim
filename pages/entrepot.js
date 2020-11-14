@@ -38,7 +38,7 @@ import receiptFilter from '../static/data/filter.js'
 import {BrandService, PlaceService, ProviderService, ProductService} from "../services/main"
 import { getToken } from "../utils/token"
 
-const AUTOCOMPLETE_TIMEOUT = 100;
+const AUTOCOMPLETE_TIMEOUT = 30;
 
 class Entrepot extends React.Component {
 
