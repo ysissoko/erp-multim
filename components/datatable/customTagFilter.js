@@ -2,7 +2,7 @@ import React from 'react';
 import { ButtonToolbar, TagPicker, DateRangePicker, InputGroup, AutoComplete, Icon } from 'rsuite';
 import '../../static/css/toolbar.less';
 
-  const CustomTagFilter = ({ placeholder, onFilter, dataFilter, dataSearch, value, onFilterDate, onSelect, onDateRangeClean, onAutocompleteInputChange }) => {
+  const CustomTagFilter = ({ placeholder, onFilter, dataFilter, dataSearch, valueInput, valueFilter, valueDate, onFilterDate, onSelect, onDateRangeClean, onAutocompleteInputChange }) => {
     return (
       <div className="table-toolbar">
         <ButtonToolbar className="inner-right">
@@ -12,6 +12,7 @@ import '../../static/css/toolbar.less';
               data={dataSearch}
               placeholder={placeholder}
               onChange={onAutocompleteInputChange}
+              value={valueInput}
             />
             <InputGroup.Addon>
               <Icon icon="search" />
@@ -36,7 +37,7 @@ import '../../static/css/toolbar.less';
               showOneCalendar
               style={{ width: 100, float: 'inherit', marginRight: '5px' }}
               placement="bottomEnd"
-              value={value}
+              value={valueDate}
               onChange={onFilterDate}
               onClean={onDateRangeClean}
             />
@@ -48,6 +49,7 @@ import '../../static/css/toolbar.less';
             placeholder="Filtrer par"
             onChange={onFilter}
             onSelect={onSelect}
+            value={valueFilter}
           />
 
         </ButtonToolbar>

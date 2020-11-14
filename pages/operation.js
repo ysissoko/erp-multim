@@ -340,7 +340,7 @@ class Operation extends Component {
     });
 
     this.whInOpService.filterWhIn({
-      searchTerm: this.state.whInSearchTerm,
+      searchTerm: this.state.whInSearchTerm.trim(),
       dateRange: (this.state.dateRangeFilterWhIn) ? this.state.dateRangeFilterWhIn.map(d => d.toISOString()) : undefined,
       statusTags: this.state.whInStatusFilters,
       page: this.state.pageWhIn,
@@ -369,7 +369,7 @@ class Operation extends Component {
     });
 
     this.whOutService.filterWhOut({
-      searchTerm: this.state.whOutSearchTerm,
+      searchTerm: this.state.whOutSearchTerm.trim(),
       dateRange: (this.state.dateRangeFilterWhOut) ? this.state.dateRangeFilterWhOut.map(d => d.toISOString()) : undefined,
       statusTags: this.state.whOutStatusFilters,
       page: this.state.pageWhOut,
@@ -564,13 +564,18 @@ class Operation extends Component {
       case 'allReceipt':
         this.setState({
           onRowClicked: !this.state.onRowClicked,
-          checkedKeys: []
+          checkedKeys: [],
+          selectedWhInProductListDetails: [],
+          selectedDelivery: null,
         });
         break;
       case 'allDelivery':
         this.setState({
           onRowClicked: !this.state.onRowClicked,
-          checkedKeys: []
+          checkedKeys: [],
+          selectedWhOutProductListDetails : [],
+          selectedWhOutClassicProductListDetails: [],
+          selectedReceipt: null,
         });
         break;
     }
@@ -764,7 +769,7 @@ class Operation extends Component {
     const selectedReceipt = this.state.rawReceiptList.find(receipt => receipt.refCode === value.operation);
 
     this.setState(prevState => {
-      return {...prevState, selectedReceipt: selectedReceipt, }
+      return {...prevState, loading: true, selectedReceipt: selectedReceipt, }
     });
 
     let selectedWhInProductListDetails = [];
@@ -776,7 +781,7 @@ class Operation extends Component {
         })})
 
         this.setState(prevState => {
-        return {...prevState, selectedWhInProductListDetails: selectedWhInProductListDetails}
+        return {...prevState, loading: false, selectedWhInProductListDetails: selectedWhInProductListDetails}
       })
     }, error => console.error(error))
   }
@@ -790,14 +795,17 @@ class Operation extends Component {
 
     if (selectedDelivery)
     {
-
       this.setState(prevState => {
         return {...prevState, selectedDelivery: selectedDelivery}
       });
 
+      this.setState({
+        loading: true
+      });
+
       this.whOutService.getWhOutInfo(selectedDelivery.refCode).then(response => {
         const delivery = response.data;
-        console.log(delivery)
+
         if (delivery.type === "classic")
         {
           if (delivery.cartonsOut)
@@ -854,7 +862,7 @@ class Operation extends Component {
             selectedWhOutClassicProductListDetails.push(treeDataNotPlacedProducts);
 
           this.setState(prevState => {
-            return {...prevState, selectedWhOutClassicProductListDetails: selectedWhOutClassicProductListDetails}
+            return {...prevState, loading: false, selectedWhOutClassicProductListDetails: selectedWhOutClassicProductListDetails}
           });
         } else {
             delivery.productsOutStock.forEach((productOutStock) => {
@@ -868,7 +876,7 @@ class Operation extends Component {
           })
 
           this.setState(prevState => {
-            return {...prevState, selectedWhOutProductListDetails: selectedWhOutProductListDetails}
+            return {...prevState, loading: false, selectedWhOutProductListDetails: selectedWhOutProductListDetails}
           });
         }
       }, error => console.error(error))
@@ -1019,8 +1027,10 @@ class Operation extends Component {
                     onFilter={this.onWhInFilter}
                     dataFilter={receiptFilter}
                     //date filter
-                    value={this.state.valueDate}
+                    valueDate={this.state.dateRangeFilterWhIn}
+                    valueInput={this.state.whInSearchTerm}
                     onFilterDate={this.onWhInDateFilter}
+                    valueFilter={this.state.whInStatusFilters}
                     onDateRangeClean={this.onWhInDateClean}
                     onAutocompleteInputChange={this.onWhInAutocompleteInputChange}
                   />
@@ -1158,7 +1168,9 @@ class Operation extends Component {
                   placeholder="Rechercher par whout"
                   dataFilter={filterDelivery}
                   onAutocompleteInputChange={this.onWhOutAutocompleteInputChange}
-                  value={this.state.valueDate}
+                  valueDate={this.state.dateRangeFilterWhOut}
+                  valueInput={this.state.whOutSearchTerm}
+                  valueFilter={this.state.whOutStatusFilters}
                   onFilterDate={this.onWhOutDateFilter}
                   onDateRangeClean={this.onWhOutDateClean}
                   onSelect={this.onWhOutFilter}
@@ -1216,7 +1228,7 @@ class Operation extends Component {
                 {this.state.selectedDelivery.type === "classic" && (
                   <DataTableTree
                   //TO DO : ADD DATA
-                  data={this.state.selectedWhOutClassicProductListDetails} //pour tester le TreeDtable, remplace par this.state.treeData
+                  data={this.state.selectedWhOutClassicProductListDetails}
                   //column
                   column={columnWHOUTClassic}
                   sortColumn={this.state.sortColumn}

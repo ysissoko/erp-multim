@@ -147,7 +147,7 @@ class Entrepot extends React.Component {
 
     this.productService.filterProduct({
       type: this.state.catalogFilterType,
-      searchTerm: this.state.catalogAutocompleteFilter,
+      searchTerm: this.state.catalogAutocompleteFilter.trim(),
       page: this.state.pageProducts,
       limit: this.state.productsPageDispLen
     })
@@ -164,7 +164,7 @@ class Entrepot extends React.Component {
     });
 
     this.brandService.filterBrand({
-      searchTerm: this.state.brandsAutocompleteFilter,
+      searchTerm: this.state.brandsAutocompleteFilter.trim(),
       page: this.state.pageBrands,
       limit: this.state.brandsPageDispLen
     })
@@ -181,7 +181,7 @@ class Entrepot extends React.Component {
     });
 
     this.placeService.filterPlace({
-      searchTerm: this.state.placesAutocompleteFilter,
+      searchTerm: this.state.placesAutocompleteFilter.trim(),
       page: this.state.pagePlaces,
       limit: this.state.placesPageDispLen
     })
@@ -194,7 +194,7 @@ class Entrepot extends React.Component {
   refreshProvidersList()
   {
     this.providerService.filterProvider({
-      searchTerm: this.state.providersAutocompleteFilter,
+      searchTerm: this.state.providersAutocompleteFilter.trim(),
       page: this.state.pageProviders,
       limit: this.state.providersPageDispLen
     })
@@ -878,6 +878,7 @@ class Entrepot extends React.Component {
                   //search
                   placeholder="Rechercher par place..."
                   onAutocompleteInputChange={this.onPlacesAutocompleteChange}
+                  value={this.state.placesAutocompleteFilter}
                 />
                 <DataTable
                   data={this.sortData(this.state.placeList)}
@@ -934,6 +935,7 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par marque..."
+                  value={this.state.brandsAutocompleteFilter}
                   onAutocompleteInputChange={this.onBrandsAutocompleteInputChange}
                 />
                 <DataTable
@@ -993,6 +995,7 @@ class Entrepot extends React.Component {
                   //search
                   placeholder="Rechercher par fournisseur..."
                   onAutocompleteInputChange={this.onProvidersAutocompleteInputChange}
+                  value={this.state.providersAutocompleteFilter}
                 />
 
                 <DataTable
@@ -1062,6 +1065,7 @@ class Entrepot extends React.Component {
                   //search
                   placeholder="Rechercher par produit, marque, barcode..."
                   onAutocompleteInputChange={this.onCatalogAutocompleteChange}
+                  value={this.state.catalogAutocompleteFilter}
                 />
 
                 <FormGroup controlId="radioList">

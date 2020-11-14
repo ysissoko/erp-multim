@@ -2,7 +2,7 @@ import React from 'react';
 import { ButtonToolbar, TagPicker, InputGroup, AutoComplete, Icon } from 'rsuite';
 import '../../static/css/dataTable.less';
 
-  const CustomFilter = ({ placeholder, onFilter, dataFilter, onAutocompleteInputChange, dataSearch, needFilter }) => {
+  const CustomFilter = ({ placeholder, onFilter, dataFilter, onAutocompleteInputChange, value, valueFilter, dataSearch, needFilter }) => {
     return (
       <div className="table-toolbar">
         <ButtonToolbar className="inner-right">
@@ -11,6 +11,7 @@ import '../../static/css/dataTable.less';
             data={dataFilter}
             style={{ width: 250 }} menuStyle={{width: 250}}
             groupBy="role"
+            value={valueFilter}
             placeholder="Filtrer par"
             onChange={onFilter}
           />
@@ -19,6 +20,7 @@ import '../../static/css/dataTable.less';
           <InputGroup inside style={{float: 'inherit', width: 300}}>
             <AutoComplete
               data={dataSearch}
+              value={value}
               placeholder={placeholder}
               onChange={onAutocompleteInputChange}
             />

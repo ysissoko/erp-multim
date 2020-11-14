@@ -54,7 +54,7 @@ export default class WhInOpService extends BaseCrudService
             statusTags.push("inprogress");
           break;
           case "terminée":
-            statusTags.push(value);
+            statusTags.push("done");
           break;
         }
       }

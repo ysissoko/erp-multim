@@ -47,10 +47,6 @@ export default class CartonOutService extends BaseCrudService
     // Sinon
     if (filters.tagFilters && filters.tagFilters.length === 1)
     {
-      // si il y a un search term on ajoute un or
-      if (isSearchTerm)
-        qb.setOr({ field: "scanned", operator: "$eq", value: (filters.tagFilters[0] === 'enregistré') ? true : false})
-      else
         qb.setFilter({ field: "scanned", operator: "$eq", value: (filters.tagFilters[0] === 'enregistré') ? true : false})
     }
     

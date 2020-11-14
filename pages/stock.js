@@ -77,8 +77,6 @@ class Stock extends React.Component {
       cartonMoveHistory: [],
       inputNumCartonsToCreate: "",
       inputNumCartonsOutToCreate: "",
-      filterProduct,
-      filterCarton,
       carton: false,
       showCartonOutModal: false,
       checkedKeys: [], //checkbox
@@ -270,7 +268,6 @@ class Stock extends React.Component {
 
   updateCartonOutList(pages)
   {
-    console.log(pages)
     this.setState((prevState) => ({...prevState, loading: false, cartonsOutTotal: pages.total, cartonsOutList: pages.data.map((carton) => ({
         id: carton.id,
         cartonOut: carton.refCode,
@@ -320,7 +317,7 @@ class Stock extends React.Component {
     this.cartonInService.filterCartonsIn({
       type: this.state.cartonInFilterType,
       tagFilters: this.state.cartonsInStatusTagFilters,
-      searchTerm: this.state.cartonsInAutocompleteFilter,
+      searchTerm: this.state.cartonsInAutocompleteFilter.trim(),
       page: this.state.pageCartonsIn,
       limit: this.state.cartonsInPageDispLen
     })
@@ -339,7 +336,7 @@ class Stock extends React.Component {
     this.cartonOutService.filterCartonsOut({
       type: this.state.cartonOutFilterType,
       tagFilters: this.state.cartonsOutStatusTagFilters,
-      searchTerm: this.state.cartonsOutAutocompleteFilter,
+      searchTerm: this.state.cartonsOutAutocompleteFilter.trim(),
       page: this.state.pageCartonsOut,
       limit: this.state.cartonsOutPageDispLen
     })
@@ -357,7 +354,7 @@ class Stock extends React.Component {
     
     this.productInService.filterProductIn({
       type: this.state.productInFilterType,
-      searchTerm: this.state.productsAutocompleteFilter,
+      searchTerm: this.state.productsAutocompleteFilter.trim(),
       page: this.state.pageProducts,
       limit: this.state.productPageDispLen
     })
@@ -375,7 +372,7 @@ class Stock extends React.Component {
 
     this.whMovOpService.filterHistory({
       type: this.state.historyFilterType,
-      searchTerm: this.state.historyAutocompleteFilter,
+      searchTerm: this.state.historyAutocompleteFilter.trim(),
       page: this.state.pageHistory,
       limit: this.state.historyPageDispLen
     })
@@ -512,7 +509,11 @@ class Stock extends React.Component {
       case 'allCarton':
         this.setState({
           onRowClicked: !this.state.onRowClicked,
-          checkedKeys: []
+          checkedKeys: [],
+          selectedCartonInInfo: null,
+          selectedCartonInProducts: [],
+          selectedCartonOutProducts: [],
+          selectedCartonHistory: null,
         });
         break;
     }
@@ -825,9 +826,11 @@ sortData = (data) => {
                     />
                     </>)}
                 </div>
+
                 <CustomFilter
                   placeholder="Rechercher par produit, place, carton..."
                   onAutocompleteInputChange={this.onProductsAutocompleteChange}
+                  value={this.state.productsAutocompleteFilter}
                 />
 
                 <FormGroup controlId="radioList">
@@ -883,7 +886,6 @@ sortData = (data) => {
                   <Toolbar
                     data={receiptFilter}
                     primaryButton="Nouveau Carton IN"
-                    //openModal={this.openModal}
                     importModal={() => this.openModal('carton')}
                   />)}
                   {(indeterminate || checked) && (
@@ -908,12 +910,12 @@ sortData = (data) => {
                   )}
                 </div>
                 <CustomFilter
-                  //filter
                   needFilter={true}
+                  valueFilter={this.state.cartonsInStatusTagFilters}
                   placeholder="Rechercher par carton, whin, place..."
                   dataFilter={filterCarton}
                   onAutocompleteInputChange={this.onCartonsInAutocompleteChange}
-                  //search
+                  value={this.state.cartonsInAutocompleteFilter}
                   onFilter={this.onHandleCartonsInFilterChange}
                 />
 
@@ -989,7 +991,7 @@ sortData = (data) => {
                   handleChangeLength={(dataKey) => this.setState((prevState) => ({...prevState, pageCartonInDetailsDispLen: dataKey}))}
                   displayLength={this.state.pageCartonInDetailsDispLen}
                   page={this.state.pageCartonInDetails}
-                  total={this.state.selectedCartonInProducts.length} //TO CHANGE
+                  total={this.state.selectedCartonInProducts.length}
                 />
                 </>
                 )}
@@ -1040,6 +1042,8 @@ sortData = (data) => {
                   dataFilter={filterCarton}
                   onAutocompleteInputChange={this.onCartonsOutAutocompleteChange}
                   onFilter={this.onHandleCartonsOutFilterChange}
+                  value={this.state.cartonsOutAutocompleteFilter}
+                  valueFilter={this.state.cartonsOutStatusTagFilters}
                 />
 
                 <FormGroup controlId="radioList">
@@ -1089,9 +1093,7 @@ sortData = (data) => {
                       title={this.state.selectedCartonOutInfo.cartonOut}
                       status={this.state.selectedCartonOutInfo.statut}
                     />
-                  {/* <CustomFilter
-                    style={{paddingTop: '0px !important'}}
-                  /> */}
+
                   <DataTable
                     data={this.state.selectedCartonOutProducts}
                     //column
@@ -1129,6 +1131,7 @@ sortData = (data) => {
                 <CustomFilter
                   placeholder="Rechercher par whmov, carton, place..."
                   onAutocompleteInputChange={this.onHistoryAutocompleteChange}
+                  value={this.state.historyAutocompleteFilter}
                 />
 
                 <FormGroup controlId="radioList">
