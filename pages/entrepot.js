@@ -10,7 +10,6 @@ import DataTable from '../components/_shared/dataTable'
 
 //ACTION BUTTON
 import Toolbar from '../components/_shared/toolbar'
-import DeleteButton from '../components/_shared/deleteButton'
 
 //FILTER & SEARCH
 import CustomFilter from '../components/datatable/customFilter';

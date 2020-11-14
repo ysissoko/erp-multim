@@ -43,7 +43,6 @@ import receiptFilter from '../static/data/filter.js'
 import filterReceipt from "../static/datatable/filterReceipt";
 import filterDelivery from "../static/datatable/filterDelivery";
 
-
 import {ProviderService, WhInOpService, CartonInService, WhOutOpService, CartonOutService} from "../services/main"
 import {getFormattedDate, getTagByDeliveryStatus, getTagByReceiptStatus} from "../utils/date"
 import CustomTagFilter from '../components/datatable/customTagFilter';
