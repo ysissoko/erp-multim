@@ -100,7 +100,7 @@ export default class ProductService extends BaseCrudService
   {
     const qb = RequestQueryBuilder.create();
     qb.setLimit(filters.limit)
-      .setJoin([{field:'product'}, {field:'product.brand'}])
+      .setJoin([{field:'brand'}])
       .setPage(filters.page)
 
     if (filters.searchTerm)
@@ -108,16 +108,16 @@ export default class ProductService extends BaseCrudService
       switch(filters.type)
       {
         case 'product_name':
-          qb.setFilter({ field: "product.name", operator: "$cont", value: filters.searchTerm});
+          qb.setFilter({ field: "name", operator: "$cont", value: filters.searchTerm});
         break;
         case 'product_ref':
-          qb.setFilter({ field: "product.refCode", operator: "$cont", value: filters.searchTerm});
+          qb.setFilter({ field: "refCode", operator: "$cont", value: filters.searchTerm});
         break;
         case 'product_brand':
-          qb.setFilter({ field: "product.brand.name", operator: "$cont", value: filters.searchTerm});
+          qb.setFilter({ field: "brand.name", operator: "$cont", value: filters.searchTerm});
         break;
         case 'product_ean':
-          qb.setFilter({ field: "product.eanCode", operator: "$cont", value: filters.searchTerm});
+          qb.setFilter({ field: "eanCode", operator: "$cont", value: filters.searchTerm});
         break;
       }
     }
