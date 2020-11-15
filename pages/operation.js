@@ -576,9 +576,11 @@ class Operation extends Component {
 
   //ON ROW CLICK
   handleAction = () => {
+    console.log("handle action")
     this.setState({
       onRowClicked: true,
-      checkedKeys: [] //reset checkbox
+      checkedKeys: [], //reset checkbox
+      loading: true
     });
   }
 
@@ -674,7 +676,6 @@ class Operation extends Component {
 
   createWhInOp()
   {
-    //console.log(`WH in to create ${this.state.whInRefCodeToCreate}, number of cartons: ${this.state.numCartonsToCreate}, provider: ${this.state.providerToCreate} `)
     this.whInOpService.create({refCode: this.state.whInRefCodeToCreate, provider: {id: this.state.providerToCreate}})
                       .then((response) => {
                         console.log(response.data);
@@ -734,12 +735,10 @@ class Operation extends Component {
   }
 
   onWhOutDateFilter = (dateRange) => {
-    console.log("WH out filter date")
       this.setState(prevState => ({...prevState, dateRangeFilterWhOut: dateRange}))
   }
 
   onCartonOutDateFilter = (dateRange) => {
-    console.log("carton out filter date")
       this.setState(prevState => ({...prevState, dateRangeFilterCartonOut: dateRange}))
   }
 
@@ -753,13 +752,12 @@ class Operation extends Component {
     const selectedReceipt = this.state.rawReceiptList.find(receipt => receipt.refCode === value.operation);
 
     this.setState(prevState => {
-      return {...prevState, loading: true, selectedReceipt: selectedReceipt, }
+      return {...prevState,  selectedReceipt: selectedReceipt, }
     });
 
-    let selectedWhInProductListDetails = [];
-
     this.whInOpService.getWhInInfo(selectedReceipt.refCode).then((response) => {
-      response.data.cartons.forEach((carton) => {
+      let selectedWhInProductListDetails = [];
+        response.data.cartons.forEach((carton) => {
           carton.productsInStock.forEach((productInStock) => {
             selectedWhInProductListDetails.push({carton: carton.refCode, product: productInStock.product.refCode, quantity: productInStock.quantity, barcode: productInStock.product.eanCode, place: carton.place.refCode });
         })})
@@ -781,10 +779,6 @@ class Operation extends Component {
     {
       this.setState(prevState => {
         return {...prevState, selectedDelivery: selectedDelivery}
-      });
-
-      this.setState({
-        loading: true
       });
 
       this.whOutService.getWhOutInfo(selectedDelivery.refCode).then(response => {
@@ -869,7 +863,6 @@ class Operation extends Component {
 
   onWhOutFilterChange(values)
   {
-    console.log(values);
     this.setState(prevState => ({...prevState, whOutStatusFilters: values}))
   }
 
@@ -1255,7 +1248,6 @@ class Operation extends Component {
                 </>
             )}
             </Panel>
-
 
           {/* CONFIRMATION MODAL FOR DELETE ACTION */}
           <div className="modal-container">
