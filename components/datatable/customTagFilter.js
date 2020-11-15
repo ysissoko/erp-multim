@@ -1,22 +1,21 @@
 import React from 'react';
-import { ButtonToolbar, TagPicker, DateRangePicker, InputGroup, AutoComplete, Icon } from 'rsuite';
+import { ButtonToolbar, TagPicker, DateRangePicker, InputGroup, Input, Icon } from 'rsuite';
 import '../../static/css/toolbar.less';
 
-  const CustomTagFilter = ({ placeholder, onFilter, dataFilter, dataSearch, valueInput, valueFilter, valueDate, onFilterDate, onSelect, onDateRangeClean, onAutocompleteInputChange }) => {
+  const CustomTagFilter = ({ placeholder, onFilter, dataFilter, onSearchClick, valueInput, valueFilter, valueDate, onFilterDate, onSelect, onDateRangeClean, onInputChange }) => {
     return (
       <div className="table-toolbar">
         <ButtonToolbar className="inner-right">
 
           <InputGroup inside style={{float: 'inherit', width: '200px'}}>
-            <AutoComplete
-              data={dataSearch}
+            <Input
               placeholder={placeholder}
-              onChange={onAutocompleteInputChange}
+              onChange={onInputChange}
               value={valueInput}
             />
-            <InputGroup.Addon>
+            <InputGroup.Button onClick={onSearchClick}>
               <Icon icon="search" />
-            </InputGroup.Addon>
+            </InputGroup.Button>
           </InputGroup>
 
             <DateRangePicker

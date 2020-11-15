@@ -569,7 +569,6 @@ export default class WhOutOpService extends BaseCrudService
 
   filterWhOut(filters)
   {
-    console.log(filters)
     const qb = RequestQueryBuilder.create();
     qb.setLimit(filters.limit)
       .setPage(filters.page)
@@ -586,7 +585,6 @@ export default class WhOutOpService extends BaseCrudService
     
     if (filters.dateRange)
     {
-      console.log(filters.dateRange)
       const dateRangeField = { field: "createdAt", operator: "$between", value: filters.dateRange };
       qb.setFilter(dateRangeField);
     }
@@ -600,8 +598,6 @@ export default class WhOutOpService extends BaseCrudService
 
       for (let i = 0, j=0; i < filters.statusTags.length; ++i)
       {
-        let value = "";
-
         switch(filters.statusTags[i])
         {
           case "à préparer":
@@ -629,7 +625,6 @@ export default class WhOutOpService extends BaseCrudService
   }
 
   const queryParams = qb.query();
-  console.log(queryParams)
   return Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}?${queryParams}`, this._headers);
 }
 }

@@ -111,15 +111,20 @@ class Stock extends React.Component {
     this.handleConfirm = this.handleConfirm.bind(this);
 
     // Autocomplete handlers
-    this.onProductsAutocompleteChange = this.onProductsAutocompleteChange.bind(this);
-    this.onCartonsInAutocompleteChange = this.onCartonsInAutocompleteChange.bind(this);
-    this.onCartonsOutAutocompleteChange = this.onCartonsOutAutocompleteChange.bind(this);
-    this.onHistoryAutocompleteChange = this.onHistoryAutocompleteChange.bind(this);
+    this.onProductsInputChange = this.onProductsInputChange.bind(this);
+    this.onCartonsInInputChange = this.onCartonsInInputChange.bind(this);
+    this.onCartonsOutInputChange = this.onCartonsOutInputChange.bind(this);
+    this.onHistoryInputChange = this.onHistoryInputChange.bind(this);
     this.onHandleCartonsOutFilterChange = this.onHandleCartonsOutFilterChange.bind(this);
     this.onHandleCartonsInFilterChange = this.onHandleCartonsInFilterChange.bind(this);
 
     this.updateCartonInList = this.updateCartonInList.bind(this);
     this.updateCartonOutList = this.updateCartonOutList.bind(this);
+
+    this.refreshCartonInStock = this.refreshCartonInStock.bind(this);
+    this.refreshCartonOutStock = this.refreshCartonOutStock.bind(this);
+    this.refreshWhMovOps = this.refreshWhMovOps.bind(this);
+    this.refreshProductInStock = this.refreshProductInStock.bind(this);
   }
 
   deleteSelectedCartonsInStock()
@@ -416,43 +421,6 @@ class Stock extends React.Component {
 
   }
 
-  componentDidUpdate(prevProps, prevState)
-  {
-    if (this.state.cartonsInAutocompleteFilter != prevState.cartonsInAutocompleteFilter
-      || this.state.cartonsInStatusTagFilters != prevState.cartonsInStatusTagFilters
-      || this.state.pageCartonsIn != prevState.pageCartonsIn
-      || this.state.cartonsInPageDispLen != prevState.cartonsInPageDispLen
-      || this.state.cartonInFilterType != prevState.cartonInFilterType)
-    {
-      this.refreshCartonInStock();
-    }
-
-    if (this.state.cartonsOutAutocompleteFilter != prevState.cartonsOutAutocompleteFilter
-      || this.state.cartonsOutStatusTagFilters != prevState.cartonsOutStatusTagFilters
-      || this.state.pageCartonsOut != prevState.pageCartonsOut
-      || this.state.cartonsOutPageDispLen != prevState.cartonsOutPageDispLen
-      || this.state.cartonOutFilterType != prevState.cartonOutFilterType)
-    {
-      this.refreshCartonOutStock();
-    }
-
-    if (this.state.historyAutocompleteFilter != prevState.historyAutocompleteFilter
-      || this.state.pageHistory != prevState.pageHistory 
-      || this.state.historyPageDispLen != prevState.historyPageDispLen
-      || this.state.historyFilterType != prevState.historyFilterType)
-    {
-      this.refreshWhMovOps();
-    }
-
-    if (this.state.pageProducts != prevState.pageProducts 
-      || this.state.productPageDispLen != prevState.productPageDispLen
-      || this.state.productsAutocompleteFilter != prevState.productsAutocompleteFilter
-      || this.state.productInFilterType != prevState.productInFilterType)
-    {
-      this.refreshProductInStock();
-    }
-  }
-
   openModal(type) {
     switch (type) {
       case 'carton' :
@@ -676,44 +644,24 @@ sortData = (data) => {
       this.setState({pageHistory: 1, historyPageDispLen: dataKey });
   }
 
-  onProductsAutocompleteChange(value)
+  onProductsInputChange(value)
   {
-    if (this.productInAutocompleteTimeout)
-      clearTimeout(this.productInAutocompleteTimeout);
-
-    this.productInAutocompleteTimeout = setTimeout(() => {
-      this.setState(prevState => ({...prevState, productsAutocompleteFilter: value}))
-    }, AUTOCOMPLETE_TIMEOUT);
+    this.setState(prevState => ({...prevState, productsAutocompleteFilter: value}))
   }
 
-  onCartonsOutAutocompleteChange(value)
+  onCartonsOutInputChange(value)
   {
-    if (this.cartonOutAutocompleteTimeout)
-      clearTimeout(this.cartonOutAutocompleteTimeout);
-
-    this.cartonOutAutocompleteTimeout = setTimeout(() => {
       this.setState(prevState => ({...prevState, cartonsOutAutocompleteFilter: value}))
-    }, AUTOCOMPLETE_TIMEOUT);
   }
 
-  onCartonsInAutocompleteChange(value)
+  onCartonsInInputChange(value)
   {
-    if (this.cartonInAutocompleteTimeout)
-      clearTimeout(this.cartonInAutocompleteTimeout);
-
-    this.cartonInAutocompleteTimeout = setTimeout(() => {
       this.setState(prevState => ({...prevState, cartonsInAutocompleteFilter: value}))
-    }, AUTOCOMPLETE_TIMEOUT);
   }
 
-  onHistoryAutocompleteChange(value)
+  onHistoryInputChange(value)
   {
-    if (this.historyAutocompleteTimeout)
-      clearTimeout(this.historyAutocompleteTimeout);
-
-    this.historyAutocompleteTimeout = setTimeout(() => {
-      this.setState(prevState => ({...prevState, historyAutocompleteFilter: value}))
-    }, AUTOCOMPLETE_TIMEOUT);
+    this.setState(prevState => ({...prevState, historyAutocompleteFilter: value}))
   }
 
   onHandleCartonsOutFilterChange(tagFilters)
@@ -829,8 +777,9 @@ sortData = (data) => {
 
                 <CustomFilter
                   placeholder="Rechercher par produit, place, carton..."
-                  onAutocompleteInputChange={this.onProductsAutocompleteChange}
+                  onInputChange={this.onProductsInputChange}
                   value={this.state.productsAutocompleteFilter}
+                  onSearchClick={this.refreshProductInStock}
                 />
 
                 <FormGroup controlId="radioList">
@@ -909,14 +858,16 @@ sortData = (data) => {
                     </>
                   )}
                 </div>
+
                 <CustomFilter
                   needFilter={true}
+                  dataFilter={filterCarton}
                   valueFilter={this.state.cartonsInStatusTagFilters}
                   placeholder="Rechercher par carton, whin, place..."
-                  dataFilter={filterCarton}
-                  onAutocompleteInputChange={this.onCartonsInAutocompleteChange}
+                  onInputChange={this.onCartonsInInputChange}
                   value={this.state.cartonsInAutocompleteFilter}
                   onFilter={this.onHandleCartonsInFilterChange}
+                  onSearchClick={this.refreshCartonInStock}
                 />
 
                 <FormGroup controlId="radioList">
@@ -1040,10 +991,11 @@ sortData = (data) => {
                   needFilter={true}
                   placeholder="Rechercher par carton, whout..."
                   dataFilter={filterCarton}
-                  onAutocompleteInputChange={this.onCartonsOutAutocompleteChange}
+                  onInputChange={this.onCartonsOutInputChange}
                   onFilter={this.onHandleCartonsOutFilterChange}
                   value={this.state.cartonsOutAutocompleteFilter}
                   valueFilter={this.state.cartonsOutStatusTagFilters}
+                  onSearchClick={this.refreshCartonOutStock}
                 />
 
                 <FormGroup controlId="radioList">
@@ -1130,8 +1082,9 @@ sortData = (data) => {
                 </div>
                 <CustomFilter
                   placeholder="Rechercher par whmov, carton, place..."
-                  onAutocompleteInputChange={this.onHistoryAutocompleteChange}
+                  onInputChange={this.onHistoryInputChange}
                   value={this.state.historyAutocompleteFilter}
+                  onSearchClick={this.refreshWhMovOps}
                 />
 
                 <FormGroup controlId="radioList">

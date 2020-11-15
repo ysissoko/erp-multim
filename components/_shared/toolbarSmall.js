@@ -4,7 +4,7 @@ import '../../static/css/toolbar.less';
 import BackButton from '../_shared/backButton'
 
 
-const ToolbarSmall = ({ data, dataSearch, onAutocompleteInputChange, primaryButton, onBackButton, label, onDownload, onDownloadPdf, onFilter, downloadExcel, downloadPdf }) => (
+const ToolbarSmall = ({ data, dataSearch, onInputChange, primaryButton, onBackButton, label, onDownload, onDownloadPdf, onFilter, downloadExcel, downloadPdf }) => (
   <>
     <div className="table-toolbar">
           <BackButton
@@ -43,7 +43,7 @@ const ToolbarSmall = ({ data, dataSearch, onAutocompleteInputChange, primaryButt
             <AutoComplete
               data={dataSearch}
               placeholder="Rechercher"
-              onChange={onAutocompleteInputChange}
+              onChange={onInputChange}
             />
             <InputGroup.Button>
               <Icon icon="search" />

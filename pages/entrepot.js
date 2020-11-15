@@ -108,22 +108,15 @@ class Entrepot extends React.Component {
     this.handleConfirm = this.handleConfirm.bind(this);
 
     // Autocomplete handlers
-    this.onProvidersAutocompleteInputChange = this.onProvidersAutocompleteInputChange.bind(this);
-    this.onBrandsAutocompleteInputChange = this.onBrandsAutocompleteInputChange.bind(this);
-    this.onPlacesAutocompleteChange = this.onPlacesAutocompleteChange.bind(this);
-    this.onCatalogAutocompleteChange = this.onCatalogAutocompleteChange.bind(this);
-  }
+    this.onProvidersInputChange = this.onProvidersInputChange.bind(this);
+    this.onBrandsInputChange = this.onBrandsInputChange.bind(this);
+    this.onPlacesInputChange = this.onPlacesInputChange.bind(this);
+    this.onCatalogInputChange = this.onCatalogInputChange.bind(this);
 
-  componentWillUnmount()
-  {
-    if (this.brandsAutocompleteTimeout)
-      clearTimeout(this.brandsAutocompleteTimeout)
-    if (this.placesAutocompleteTimeout)
-      clearTimeout(this.placesAutocompleteTimeout)
-    if (this.catalogAutocompleteTimeout)
-      clearTimeout(this.catalogAutocompleteTimeout)
-    if (this.providersAutocompleteTimeout)
-      clearTimeout(this.providersAutocompleteTimeout)
+    this.refreshCatalog = this.refreshCatalog.bind(this);
+    this.refreshBrandsList = this.refreshBrandsList.bind(this);
+    this.refreshPlacesList = this.refreshPlacesList.bind(this);
+    this.refreshProvidersList = this.refreshProvidersList.bind(this);
   }
 
   handlePrintPlacesBarcodesBtnClick()
@@ -153,6 +146,7 @@ class Entrepot extends React.Component {
     })
     .then(response => {
       const pages = response.data;
+      console.log(pages)
       this.updateCatalog(pages);
     })
   }
@@ -720,44 +714,24 @@ class Entrepot extends React.Component {
   }
 
   // Autocomplete handlers
-  onPlacesAutocompleteChange(value)
+  onPlacesInputChange(value)
   {
-    if (this.placesAutocompleteTimeout)
-      clearTimeout(this.placesAutocompleteTimeout);
-
-    this.placesAutocompleteTimeout = setTimeout(() => {
       this.setState(prevState => ({...prevState, placesAutocompleteFilter: value}));
-    }, AUTOCOMPLETE_TIMEOUT);
   }
 
-  onBrandsAutocompleteInputChange(value)
+  onBrandsInputChange(value)
   {
-    if (this.brandsAutocompleteTimeout)
-      clearTimeout(this.brandsAutocompleteTimeout);
-
-    this.brandsAutocompleteTimeout = setTimeout(() => {
       this.setState(prevState => ({...prevState, brandsAutocompleteFilter: value}));
-    }, AUTOCOMPLETE_TIMEOUT);
   }
 
-  onProvidersAutocompleteInputChange(value)
+  onProvidersInputChange(value)
   {
-    if (this.providersAutocompleteTimeout)
-      clearTimeout(this.providersAutocompleteTimeout);
-
-    this.providersAutocompleteTimeout = setTimeout(() => {
-      this.setState(prevState => ({...prevState, providersAutocompleteFilter: value}));
-    }, AUTOCOMPLETE_TIMEOUT);
+    this.setState(prevState => ({...prevState, providersAutocompleteFilter: value}));
   }
 
-  onCatalogAutocompleteChange(value)
+  onCatalogInputChange(value)
   {
-    if (this.catalogAutocompleteTimeout)
-      clearTimeout(this.catalogAutocompleteTimeout);
-
-    this.catalogAutocompleteTimeout = setTimeout(() => {
-      this.setState(prevState => ({...prevState, catalogAutocompleteFilter: value}));
-    }, AUTOCOMPLETE_TIMEOUT);
+    this.setState(prevState => ({...prevState, catalogAutocompleteFilter: value}));
   }
 
   exportProductBarcodes()
@@ -773,37 +747,6 @@ class Entrepot extends React.Component {
 
     if (barcodes.length > 0)
       generateBarcodesPdf(barcodes);
-  }
-
-  componentDidUpdate(prevProps, prevState)  {
-    if (prevState.pageBrands != this.state.pageBrands 
-      || prevState.brandsPageDispLen != this.state.brandsPageDispLen
-      || prevState.brandsAutocompleteFilter != this.state.brandsAutocompleteFilter)
-    {
-      this.refreshBrandsList();
-    }
-
-    if (prevState.pagePlaces != this.state.pagePlaces 
-      || prevState.placesPageDispLen != this.state.placesPageDispLen
-      || prevState.placesAutocompleteFilter != this.state.placesAutocompleteFilter)
-    {
-      this.refreshPlacesList();
-    }
-
-    if (prevState.pageProducts != this.state.pageProducts 
-      || prevState.productsPageDispLen != this.state.productsPageDispLen
-      || prevState.catalogAutocompleteFilter != this.state.catalogAutocompleteFilter
-      || prevState.catalogFilterType != this.state.catalogFilterType)
-    {
-      this.refreshCatalog();
-    }
-
-    if (prevState.pageProviders != this.state.pageProviders 
-      || prevState.providersPageDispLen != this.state.providersPageDispLen
-      || prevState.providersAutocompleteFilter != this.state.providersAutocompleteFilter)
-    {
-      this.refreshProvidersList()
-    }
   }
 
   render() {
@@ -877,8 +820,9 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par place..."
-                  onAutocompleteInputChange={this.onPlacesAutocompleteChange}
+                  onInputChange={this.onPlacesInputChange}
                   value={this.state.placesAutocompleteFilter}
+                  onSearchClick={this.refreshPlacesList} 
                 />
                 <DataTable
                   data={this.sortData(this.state.placeList)}
@@ -936,7 +880,8 @@ class Entrepot extends React.Component {
                   //search
                   placeholder="Rechercher par marque..."
                   value={this.state.brandsAutocompleteFilter}
-                  onAutocompleteInputChange={this.onBrandsAutocompleteInputChange}
+                  onInputChange={this.onBrandsInputChange}
+                  onSearchClick={this.refreshBrandsList} 
                 />
                 <DataTable
                   data={this.sortData(this.state.brandList)}
@@ -994,7 +939,8 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par fournisseur..."
-                  onAutocompleteInputChange={this.onProvidersAutocompleteInputChange}
+                  onInputChange={this.onProvidersInputChange}
+                  onSearchClick={this.refreshProvidersList} 
                   value={this.state.providersAutocompleteFilter}
                 />
 
@@ -1064,8 +1010,9 @@ class Entrepot extends React.Component {
                 <CustomFilter
                   //search
                   placeholder="Rechercher par produit, marque, barcode..."
-                  onAutocompleteInputChange={this.onCatalogAutocompleteChange}
+                  onInputChange={this.onCatalogInputChange}
                   value={this.state.catalogAutocompleteFilter}
+                  onSearchClick={this.refreshCatalog} 
                 />
 
                 <FormGroup controlId="radioList">

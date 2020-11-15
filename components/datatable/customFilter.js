@@ -1,8 +1,8 @@
 import React from 'react';
-import { ButtonToolbar, TagPicker, InputGroup, AutoComplete, Icon } from 'rsuite';
+import { ButtonToolbar, TagPicker, InputGroup, Icon, Input } from 'rsuite';
 import '../../static/css/dataTable.less';
 
-  const CustomFilter = ({ placeholder, onFilter, dataFilter, onAutocompleteInputChange, value, valueFilter, dataSearch, needFilter }) => {
+  const CustomFilter = ({ placeholder, onFilter, dataFilter, onInputChange, value, valueFilter, onSearchClick, needFilter }) => {
     return (
       <div className="table-toolbar">
         <ButtonToolbar className="inner-right">
@@ -18,15 +18,14 @@ import '../../static/css/dataTable.less';
           )}
 
           <InputGroup inside style={{float: 'inherit', width: 300}}>
-            <AutoComplete
-              data={dataSearch}
+            <Input
               value={value}
               placeholder={placeholder}
-              onChange={onAutocompleteInputChange}
+              onChange={onInputChange}
             />
-          <InputGroup.Addon>
+          <InputGroup.Button onClick={onSearchClick}>
             <Icon icon="search" />
-          </InputGroup.Addon>
+          </InputGroup.Button>
           </InputGroup>
         </ButtonToolbar>
       </div>

@@ -139,9 +139,12 @@ class Operation extends Component {
     this.onWhOutDateClean = this.onWhOutDateClean.bind(this);
     this.onWhInDateClean = this.onWhInDateClean.bind(this);
     this.onWhInFilter = this.onWhInFilter.bind(this);
-    this.onWhInAutocompleteInputChange = this.onWhInAutocompleteInputChange.bind(this);
-    this.onWhOutAutocompleteInputChange = this.onWhOutAutocompleteInputChange.bind(this);
+    this.onWhInInputChange = this.onWhInInputChange.bind(this);
+    this.onWhOutInputChange = this.onWhOutInputChange.bind(this);
     this.onWhOutFilterChange = this.onWhOutFilterChange.bind(this);
+
+    this.refreshWhInList = this.refreshWhInList.bind(this);
+    this.refreshWhOutList = this.refreshWhOutList.bind(this);
   }
 
   handleConfirmMissingWhoutClassicExport()
@@ -418,26 +421,6 @@ class Operation extends Component {
     this.refreshProvidersList();
     this.refreshWhInList();
     this.refreshWhOutList();
-  }
-
-  componentDidUpdate(prevProps, prevState)
-  {
-    if (this.state.pageWhIn != prevState.pageWhIn
-      || this.state.whInPageDispLen != prevState.whInPageDispLen
-      || this.state.whInSearchTerm != prevState.whInSearchTerm
-      || this.state.whInStatusFilters != prevState.whInStatusFilters
-      || this.state.dateRangeFilterWhIn != prevState.dateRangeFilterWhIn)
-      {
-        this.refreshWhInList();
-      }
-      
-
-    if (this.state.pageWhOut != prevState.pageWhOut 
-      || this.state.whOutPageDispLen != prevState.whOutPageDispLen
-      || this.state.whOutSearchTerm != prevState.whOutSearchTerm
-      || this.state.whOutStatusFilters != prevState.whOutStatusFilters
-      || this.state.dateRangeFilterWhOut != prevState.dateRangeFilterWhOut)
-      this.refreshWhOutList();
   }
 
   componentWillUnmount()
@@ -921,24 +904,14 @@ class Operation extends Component {
     this.setState({whInDetailsDispLen: dataKey});
   }
 
-  onWhInAutocompleteInputChange(searchTerm)
+  onWhInInputChange(searchTerm)
   {
-    if (this.whInAutocompleteTimeout)
-      clearTimeout(this.whInAutocompleteTimeout);
-
-    this.whInAutocompleteTimeout = setTimeout(() => {
-      this.setState(prevState => ({...prevState, whInSearchTerm: searchTerm}));
-    }, AUTOCOMPLETE_TIMEOUT);
+    this.setState(prevState => ({...prevState, whInSearchTerm: searchTerm}));
   }
 
-  onWhOutAutocompleteInputChange(searchTerm)
+  onWhOutInputChange(searchTerm)
   {
-    if (this.whOutAutocompleteTimeout)
-      clearTimeout(this.whOutAutocompleteTimeout);
-
-    this.whOutAutocompleteTimeout = setTimeout(() => {
-      this.setState(prevState => ({...prevState, whOutSearchTerm: searchTerm}));
-    }, AUTOCOMPLETE_TIMEOUT);
+    this.setState(prevState => ({...prevState, whOutSearchTerm: searchTerm}));
   }
 
   exportDeliveries()
@@ -1020,6 +993,7 @@ class Operation extends Component {
                     </>
                   )}
                 </div>
+
                 <CustomTagFilter
                     //search
                     placeholder="Rechercher par whin"
@@ -1032,8 +1006,10 @@ class Operation extends Component {
                     onFilterDate={this.onWhInDateFilter}
                     valueFilter={this.state.whInStatusFilters}
                     onDateRangeClean={this.onWhInDateClean}
-                    onAutocompleteInputChange={this.onWhInAutocompleteInputChange}
+                    onInputChange={this.onWhInInputChange}
+                    onSearchClick={this.refreshWhInList}
                   />
+
                 <DataTable
                   //loading data
                   loading={this.state.loading}
@@ -1167,7 +1143,7 @@ class Operation extends Component {
                   //filter by
                   placeholder="Rechercher par whout"
                   dataFilter={filterDelivery}
-                  onAutocompleteInputChange={this.onWhOutAutocompleteInputChange}
+                  onInputChange={this.onWhOutInputChange}
                   valueDate={this.state.dateRangeFilterWhOut}
                   valueInput={this.state.whOutSearchTerm}
                   valueFilter={this.state.whOutStatusFilters}
@@ -1175,6 +1151,7 @@ class Operation extends Component {
                   onDateRangeClean={this.onWhOutDateClean}
                   onSelect={this.onWhOutFilter}
                   onFilter={this.onWhOutFilterChange}
+                  onSearchClick={this.refreshWhOutList}
                 />
 
                 <DataTable
@@ -1214,7 +1191,7 @@ class Operation extends Component {
                     onDownload={this.state.selectedDelivery.type === "classic" ? this.handleExporWhoutClassicToExcel : this.handleExportWhOutToExcel}
                     onDownloadPdf={this.handleDownloadPdf}
                     //search
-                    //onAutocompleteInputChange={}
+                    //onInputChange={}
                   />
                   {/* TO DO CHANGE DATA */}
                   <HeaderTitleTagWhOut
