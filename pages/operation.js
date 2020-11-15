@@ -52,16 +52,11 @@ import { getToken}  from "../utils/token"
 import {getPaginatedData} from '../utils/pagination'
 import {exportWhOutToPdf} from "../utils/whout-export-pdf"
 
-const AUTOCOMPLETE_TIMEOUT = 30;
-
 class Operation extends Component {
 
   constructor(props)
   {
     super(props);
-
-    this.whOutAutocompleteTimeout = null;
-    this.whInAutocompleteTimeout = null;
 
     this.state = {
       resetReceipts: false,
@@ -423,13 +418,19 @@ class Operation extends Component {
     this.refreshWhOutList();
   }
 
-  componentWillUnmount()
+  componentDidUpdate(prevProps, prevState)
   {
-    if (this.whOutAutocompleteTimeout)
-      clearTimeout(this.whOutAutocompleteTimeout)
-      
-    if (this.whInAutocompleteTimeout)
-      clearTimeout(this.whInAutocompleteTimeout)
+    if (this.state.pageWhOut !== prevState.pageWhOut
+        || this.state.whOutPageDispLen !== prevState.whOutPageDispLen)
+    {
+      this.refreshWhOutList();
+    }
+
+    if (this.state.pageWhIn !== prevState.pageWhIn
+        || this.state.whInPageDispLen !== prevState.whInPageDispLen)
+    {
+      this.refreshWhInList();
+    }
   }
 
   //MODAL

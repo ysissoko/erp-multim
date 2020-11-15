@@ -31,7 +31,6 @@ import columnCartonProduct from '../static/datatable/columnCartonProduct';
 
 // Static Data for Filter Button Name
 import CustomFilter from '../components/datatable/customFilter';
-import filterProduct from "../static/datatable/filterProduct";
 import filterCarton from "../static/datatable/filterCarton";
 
 // ******** FAKE DATA TO CHANGE ******
@@ -41,18 +40,11 @@ import {ProductInService, WhMovOpService, CartonInService, CartonOutService} fro
 import CartonHistoriqueDrawer from '../components/modal/cartonHistoriqueDrawer';
 import {getFormattedDate} from "../utils/date";
 import {getToken} from "../utils/token"
-
-const AUTOCOMPLETE_TIMEOUT = 30;
 class Stock extends React.Component {
 
   constructor(props)
   {
     super(props);
-
-    this.productInAutocompleteTimeout = null;
-    this.cartonInAutocompleteTimeout = null;
-    this.cartonOutAutocompleteTimeout = null;
-    this.historyAutocompleteTimeout = null;
 
     this.state = {
       show: false,
@@ -405,20 +397,31 @@ class Stock extends React.Component {
     this.refreshWhMovOps();
   }
 
-  componentWillUnmount()
+  componentDidUpdate(prevProps, prevState)
   {
-    if (this.productInAutocompleteTimeout)
-      clearTimeout(this.productInAutocompleteTimeout)
+    if (this.state.pageCartonsOut !== prevState.pageCartonsOut
+       || this.state.cartonsOutPageDispLen != prevState.cartonsOutPageDispLen)
+    {
+      this.refreshCartonOutStock();
+    }
 
-    if (this.cartonInAutocompleteTimeout)
-      clearTimeout(this.cartonInAutocompleteTimeout)
+    if (this.state.pageCartonsIn !== prevState.pageCartonsIn
+       || this.state.cartonsInPageDispLen != prevState.cartonsInPageDispLen)
+    {
+      this.refreshCartonInStock();
+    }
 
-    if (this.cartonOutAutocompleteTimeout)
-      clearTimeout(this.cartonOutAutocompleteTimeout)
+    if (this.state.pageProducts !== prevState.pageProducts
+       || this.state.productPageDispLen != prevState.productPageDispLen)
+    {
+      this.refreshProductInStock();
+    }
 
-    if (this.historyAutocompleteTimeout)
-      clearTimeout(this.historyAutocompleteTimeout)
-
+    if (this.state.pageHistory !== prevState.pageHistory
+       || this.state.historyPageDispLen != prevState.historyPageDispLen)
+    {
+      this.refreshWhMovOps();
+    }
   }
 
   openModal(type) {

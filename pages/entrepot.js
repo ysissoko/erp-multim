@@ -38,19 +38,12 @@ import receiptFilter from '../static/data/filter.js'
 import {BrandService, PlaceService, ProviderService, ProductService} from "../services/main"
 import { getToken } from "../utils/token"
 
-const AUTOCOMPLETE_TIMEOUT = 30;
-
 class Entrepot extends React.Component {
 
   constructor(props)
   {
     //Call component super class constructor
     super(props);
-
-    this.brandsAutocompleteTimeout = null;
-    this.providersAutocompleteTimeout = null;
-    this.catalogAutocompleteTimeout = null;
-    this.placesAutocompleteTimeout = null;
 
     this.state = {
       show: false,
@@ -132,6 +125,33 @@ class Entrepot extends React.Component {
     })
   }
 
+  componentDidUpdate(prevProps, prevState)
+  {
+    if (this.state.pageProviders !== prevState.pageProviders
+       || this.state.providersPageDispLen !== prevState.providersPageDispLen)
+    {
+      this.refreshProvidersList();
+    }
+
+    if (this.state.pageBrands !== prevState.pageBrands
+       || this.state.brandsPageDispLen !== prevState.brandsPageDispLen)
+    {
+      this.refreshBrandsList();
+    }
+
+    if (this.state.pageProducts !== prevState.pageProducts
+       || this.state.productsPageDispLen !== prevState.productsPageDispLen)
+    {
+      this.refreshCatalog();
+    }
+
+    if (this.state.pagePlaces !== prevState.pagePlaces
+       || this.state.placesPageDispLen !== prevState.placesPageDispLen)
+    {
+      this.refreshPlacesList();
+    }
+  }
+
   refreshCatalog()
   {
     this.setState({
@@ -187,6 +207,10 @@ class Entrepot extends React.Component {
 
   refreshProvidersList()
   {
+    this.setState({
+      loading: true
+    });
+
     this.providerService.filterProvider({
       searchTerm: this.state.providersAutocompleteFilter.trim(),
       page: this.state.pageProviders,
@@ -224,6 +248,7 @@ class Entrepot extends React.Component {
   {
     this.setState((prevState) => ({
       ...prevState, 
+      loading: false,
       providersTotal: pages.total, 
       checkedKeys: [], 
       providerList: pages.data.map((provider) => ({ id: provider.id, supply: provider.name}))
