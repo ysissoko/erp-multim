@@ -52,7 +52,6 @@ const DataTableTree = ({
             onExpandChange={onExpandChange}
         >
             {column.map((c) => {
-              console.log(c.datakey)
                 return ( 
                     <Column key={c} width={c.width} resizable={c.resizable} sortable={c.sortable}>
                       {c.datakey === "cartonOut" ? <HeaderCell style={{paddingLeft: '30px'}}>{c.text}</HeaderCell> : <HeaderCell>{c.text}</HeaderCell> }

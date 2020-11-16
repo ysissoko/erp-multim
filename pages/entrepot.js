@@ -166,7 +166,6 @@ class Entrepot extends React.Component {
     })
     .then(response => {
       const pages = response.data;
-      console.log(pages)
       this.updateCatalog(pages);
     })
   }
@@ -257,7 +256,6 @@ class Entrepot extends React.Component {
 
   updatePlacesList(pages)
   {
-    console.log(pages)
     this.setState((prevState) => ({
       ...prevState, 
       placesTotal: pages.total, 

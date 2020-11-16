@@ -531,7 +531,7 @@ export default class WhOutOpService extends BaseCrudService
               const endSlice = i + chunkSize < ordersToCreate.length ? i + chunkSize :  ordersToCreate.length;
               const arrayToPush = ordersToCreate.slice(i, endSlice);
 
-              const promise = Axios.post(`${BASE_API_URL}/${this._baseUrl}/import`, arrayToPush, this._headers);
+              const promise = Axios.post(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/import`, arrayToPush, this._headers);
 
               promise.then((success) => {
                 totalOrders += chunkSize;

@@ -9,16 +9,6 @@ const Menu = ({ onSelect }) => (
   <Dropdown.Menu onSelect={onSelect}>
     <Dropdown.Item eventKey={"pdf"}>Download PDF</Dropdown.Item>
     <Dropdown.Item eventKey={"excel"}>Export EXCEL</Dropdown.Item>
-
-    {/* <Dropdown.Item
-      eventKey={"edit"}
-      onClick={() => {
-        onClick && onClick(rowData.id);
-        console.log("on click", rowData.id)}
-      }>
-        {rowData.status === 'EDIT' ? 'Save' : 'Edit'}
-    </Dropdown.Item> */}
-
     <Dropdown.Item eventKey={"delete"}>Delete</Dropdown.Item>
   </Dropdown.Menu>
 );
@@ -32,7 +22,6 @@ const MenuPopover = ({ onSelect, ...rest }) => (
 class CustomWhisper extends Component {
 
   handleSelectMenu = (eventKey, event) => {
-    console.log(eventKey);
     this.trigger.hide();
   }
 
