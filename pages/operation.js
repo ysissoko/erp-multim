@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import 'rsuite/lib/styles/index.less';
 import '../static/css/dataTable.less';
 
-import {Panel, Modal, IconButton, Icon, Loader, Alert} from "rsuite";
+import {Panel, Modal, IconButton, Icon, Loader, Alert, FormGroup, ControlLabel, Radio, RadioGroup} from "rsuite";
 
 import Frame from '../components/_shared/frame'
 import HeaderTitle from '../components/_shared/headerTitle'
@@ -104,6 +104,7 @@ class Operation extends Component {
       dateRangeFilterWhIn: undefined,
       dateRangeFilterWhOut: undefined,
       dateRangeFilterCartonOut: undefined,
+      whOutFilterType: 'whout_batch',
       whInStatusFilters: [],
       whOutStatusFilters: [],
       whInSearchTerm: "",
@@ -367,6 +368,7 @@ class Operation extends Component {
     });
 
     this.whOutService.filterWhOut({
+      type: this.state.whOutFilterType,
       searchTerm: this.state.whOutSearchTerm.trim(),
       dateRange: (this.state.dateRangeFilterWhOut) ? this.state.dateRangeFilterWhOut.map(d => d.toISOString()) : undefined,
       statusTags: this.state.whOutStatusFilters,
@@ -380,6 +382,7 @@ class Operation extends Component {
         whOutTotal: pages.total,
         deliveriesList: pages.data.map(delivery => ({
           id: delivery.id,
+          order: delivery.orderNum,
           operation: delivery.refCode,
           date: getFormattedDate(delivery.createdAt),
           statut: getTagByDeliveryStatus(delivery.status),
@@ -1127,7 +1130,6 @@ class Operation extends Component {
                       icon={<Icon icon="file-excel-o" />}
                       appearance="primary"
                       onClick={() => this.openModal('export')}
-                     // onClick={this.handleExportMultipleWhOutToExcel} //TO DO
                     />
                     </>
                   )}
@@ -1147,6 +1149,15 @@ class Operation extends Component {
                   onFilter={this.onWhOutFilterChange}
                   onSearchClick={this.refreshWhOutList}
                 />
+                
+                <FormGroup controlId="radioList">
+                  <ControlLabel>Filtrer par: </ControlLabel>
+                  <RadioGroup value={this.state.whOutFilterType}  name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, whOutFilterType: v}))} inline>
+                    <Radio value="whout_batch" checked={true}>Batch</Radio>
+                    <Radio value="whout_ref">Ref whout</Radio>
+                    <Radio value="whout_orderno">N° commande</Radio>
+                  </RadioGroup>
+                </FormGroup>
 
                 <DataTable
                   data={this.sortData(this.state.deliveriesList)}
@@ -1184,8 +1195,6 @@ class Operation extends Component {
                     downloadPdf={true}
                     onDownload={this.state.selectedDelivery.type === "classic" ? this.handleExporWhoutClassicToExcel : this.handleExportWhOutToExcel}
                     onDownloadPdf={this.handleDownloadPdf}
-                    //search
-                    //onInputChange={}
                   />
                   {/* TO DO CHANGE DATA */}
                   <HeaderTitleTagWhOut
@@ -1219,7 +1228,7 @@ class Operation extends Component {
                   page={this.state.page}
                   total={this.state.selectedWhOutProductListDetails.length}
                 />)}
-                {this.state.selectedDelivery.type === "dropshipping" && (
+                { this.state.selectedDelivery.type === "dropshipping" && (
                   <DataTable
                   //TO DO : ADD DATA
                   data={this.state.selectedWhOutProductListDetails}
@@ -1303,6 +1312,7 @@ class Operation extends Component {
               />
             </Modal>
           </div>
+          
           <div className="modal-container">
             <Modal backdrop="static" show={this.state.resetDeliveries} onHide={() => this.closeModal('reset_deliveries')} size="xs" backdrop="static">
               <ResetModal

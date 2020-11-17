@@ -578,9 +578,18 @@ export default class WhOutOpService extends BaseCrudService
     
     if (filters.searchTerm)
     {
-      isSearchTerm = true;
-      qb.setFilter({ field: "refCode", operator: "$cont", value: filters.searchTerm })
-        .setOr({ field: "batch.refCode", operator: "$cont", value: filters.searchTerm })
+      switch (filters.type)
+      {
+        case 'whout_ref':
+          qb.setFilter({ field: "refCode", operator: "$cont", value: filters.searchTerm });
+          break;
+        case 'whout_orderno':
+          qb.setFilter({ field: "orderNum", operator: "$cont", value: filters.searchTerm });
+          break;
+        case 'whout_batch':
+          qb.setFilter({ field: "batch.refCode", operator: "$cont", value: filters.searchTerm });
+          break;
+      }
     }
     
     if (filters.dateRange)

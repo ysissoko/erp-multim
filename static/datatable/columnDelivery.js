@@ -10,7 +10,15 @@ export default [
         resizable: false
     },
     {
-        key: 9,
+        key: 2,
+        text: "N° commande",
+        datakey: "order",
+        width: 150,
+        sortable: true,
+        resizable: true
+    },
+    {
+        key: 3,
         text: "Batch",
         datakey: "batch",
         width: 150,
@@ -18,14 +26,15 @@ export default [
         resizable: false
     },
     {
-        key: 2,
+        key: 4,
         text: "Opération",
         datakey: "operation",
         width: 180,
         sortable: true,
         resizable: true
-    },    {
-        key: 3,
+    },
+    {
+        key: 5,
         text: "Type",
         datakey: "type",
         width: 120,
@@ -33,7 +42,7 @@ export default [
         resizable: true
     },
     {
-        key: 4,
+        key: 6,
         text: "Date",
         datakey: "date",
         width: 150,
@@ -41,7 +50,7 @@ export default [
         resizable: true
     },
     {
-        key: 5,
+        key: 7,
         text: "Qté Scannée",
         datakey: "products",
         width: 120,
@@ -49,7 +58,7 @@ export default [
         resizable: true
     },
     {
-        key: 6,
+        key: 8,
         text: "Qté Demandée",
         datakey: "productsToScan",
         width: 120,
@@ -57,7 +66,7 @@ export default [
         resizable: true
     },
     {
-        key: 7,
+        key: 9,
         text: "Statut",
         datakey: "statut",
         width: 120,
@@ -65,7 +74,7 @@ export default [
         resizable: true
     },
     {
-        key: 8,
+        key: 10,
         text: "Action",
         datakey: "action",
         width: 150,

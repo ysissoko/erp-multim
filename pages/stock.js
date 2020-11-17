@@ -786,16 +786,16 @@ sortData = (data) => {
                 />
 
                 <FormGroup controlId="radioList">
-                    <ControlLabel>Filtrer par: </ControlLabel>
-                    <RadioGroup value={this.state.productInFilterType}  name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, productInFilterType: v}))} inline>
-                      <Radio value="product_name" checked={true}>Nom produit</Radio>
-                      <Radio value="product_ref">Ref produit</Radio>
-                      <Radio value="product_brand">Marque</Radio>
-                      <Radio value="product_ean">EAN</Radio>
-                      <Radio value="product_place">Emplacement</Radio>
-                      <Radio value="product_carton">Ref carton</Radio>
-                    </RadioGroup>
-                  </FormGroup>
+                  <ControlLabel>Filtrer par: </ControlLabel>
+                  <RadioGroup value={this.state.productInFilterType}  name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, productInFilterType: v}))} inline>
+                    <Radio value="product_name" checked={true}>Nom produit</Radio>
+                    <Radio value="product_ref">Ref produit</Radio>
+                    <Radio value="product_brand">Marque</Radio>
+                    <Radio value="product_ean">EAN</Radio>
+                    <Radio value="product_place">Emplacement</Radio>
+                    <Radio value="product_carton">Ref carton</Radio>
+                  </RadioGroup>
+                </FormGroup>
 
                 <DataTable
                   data={this.sortData(this.state.productList)}
