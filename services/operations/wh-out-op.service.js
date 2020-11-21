@@ -113,6 +113,12 @@ export default class WhOutOpService extends BaseCrudService
         {
           for (let i=0;  i < cartonOut.productsOutClassic.length; ++i)
           {
+            let productsOutStock = []
+
+            whOutClassicToExport.cartonsOut.forEach(cartonOut => {
+              cartonOut.productsOutClassic.forEach(productOutClassic => productsOutStock.push(productOutClassic.productOutStock) )
+            });
+
             const productOutClassic = cartonOut.productsOutClassic[i];
             const productOutStock = whOutClassicToExport.productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id)
             
@@ -137,12 +143,12 @@ export default class WhOutOpService extends BaseCrudService
   async exportExcelFile(whOutOps, sorted=true)
   {
     const refCodes = whOutOps.map(whOutOp => whOutOp.refCode);
-    const result = await Axios.post(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/export/info`, {refCodes: refCodes}, this._headers);    console.log("export excel file")
+    const result = await Axios.post(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/export/info`, {refCodes: refCodes}, this._headers);    
+    console.log("export excel file")
     
     if (result && result.status === 201)
     {
       const whOutToExport = result.data;
-      console.log(whOutToExport)
       const sheetName = "Wh out list";
       const header = ["Order No",
                       "Command Number",
@@ -174,6 +180,8 @@ export default class WhOutOpService extends BaseCrudService
       let wsData = []
       wsData[0] = header;
       let allProductsOut = [];
+
+      console.log(whOutToExport)
 
       whOutToExport.sort((a, b) => {
         return a.createdAt - b.createdAt;
