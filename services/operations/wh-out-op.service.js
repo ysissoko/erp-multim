@@ -120,7 +120,7 @@ export default class WhOutOpService extends BaseCrudService
             });
 
             const productOutClassic = cartonOut.productsOutClassic[i];
-            const productOutStock = whOutClassicToExport.productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id)
+            const productOutStock = productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id)
             
             wsData[3+i] = [
               productOutStock.product.refCode,
