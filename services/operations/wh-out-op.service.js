@@ -109,28 +109,30 @@ export default class WhOutOpService extends BaseCrudService
           "Quantity to scan",
         ]
 
+        let j=0;
         for (let cartonOut of whOutClassicToExport.cartonsOut)
         {
-          for (let i=0;  i < cartonOut.productsOutClassic.length; ++i)
+          cartonOut.productsOutClassic.forEach((prodOutClassic) =>
           {
             let productsOutStock = []
 
             whOutClassicToExport.cartonsOut.forEach(cartonOut => {
-              cartonOut.productsOutClassic.forEach(productOutClassic => productsOutStock.push(productOutClassic.productOutStock) )
+              cartonOut.productsOutClassic.forEach(productCout => productsOutStock.push(productCout.productOutStock) )
             });
 
-            const productOutClassic = cartonOut.productsOutClassic[i];
-            const productOutStock = productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id)
+            const productOutStock = productsOutStock.find(productOutStock => productOutStock.id === prodOutClassic.productOutStock.id)
             
-            wsData[3+i] = [
+            wsData[3+j] = [
               productOutStock.product.refCode,
               productOutStock.product.eanCode,
               productOutStock.cartonIn.refCode,
               cartonOut.refCode,
               productOutClassic.quantity,
               productOutStock.quantityNeeded,
-            ]
-          }
+            ];
+
+            j++;
+          })
         }
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
