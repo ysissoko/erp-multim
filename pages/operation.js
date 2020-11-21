@@ -733,7 +733,6 @@ class Operation extends Component {
   }
 
   onWhOutFilter = (whOutStatusFilters) => {
-    console.log(whOutStatusFilters)
       this.setState(prevState => ({...prevState, whOutStatusFilters: whOutStatusFilters}));
   }
 
@@ -784,7 +783,7 @@ class Operation extends Component {
         return {...prevState, selectedDelivery: selectedDelivery}
       });
 
-      this.whOutService.getWhOutInfo(selectedDelivery.refCode).then(response => {
+      this.whOutService.getWhOutInfo(selectedDelivery).then(response => {
         const delivery = response.data;
 
         if (delivery.type === "classic")

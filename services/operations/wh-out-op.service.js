@@ -21,9 +21,9 @@ export default class WhOutOpService extends BaseCrudService
     return true;
   }
 
-  getWhOutInfo(refCode)
+  getWhOutInfo(whOut)
   {
-    return Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/ref/${refCode}`, this._headers);
+    return Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/${whOut.type}/ref/${whOut.refCode}`, this._headers);
   }
 
   sortAllProductsOutStock(allProductsOut)
