@@ -127,7 +127,7 @@ export default class WhOutOpService extends BaseCrudService
               productOutStock.product.eanCode,
               productOutStock.cartonIn.refCode,
               cartonOut.refCode,
-              productOutClassic.quantity,
+              prodOutClassic.quantity,
               productOutStock.quantityNeeded,
             ];
 
