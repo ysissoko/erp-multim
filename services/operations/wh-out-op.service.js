@@ -23,7 +23,10 @@ export default class WhOutOpService extends BaseCrudService
 
   getWhOutInfo(whOut)
   {
-    return Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/${whOut.type}/ref/${whOut.refCode}`, this._headers);
+    if (whOut.type === "classic")
+      return Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/classic/${whOut.refCode}/info`, this._headers)
+    
+    return Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/dropshipping/${whOut.refCode}/info`,  this._headers);
   }
 
   sortAllProductsOutStock(allProductsOut)
@@ -59,11 +62,9 @@ export default class WhOutOpService extends BaseCrudService
   async exportWhOutClassicToExcel(whOutClassic)
   {
     console.log("export classic whout");
-    console.log(whOutClassic)
     // Récupération des détails ddu  whout classic
 
-    const result = await Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/classic/${whOutClassic.refCode}/info`, this._headers);
-    console.log(result)
+    const result = await getWhoutClassicInfo();
     const whOutClassicToExport = result.data;
 
     const sheetName = "Wh out classic";
@@ -182,8 +183,6 @@ export default class WhOutOpService extends BaseCrudService
       let wsData = []
       wsData[0] = header;
       let allProductsOut = [];
-
-      console.log(whOutToExport)
 
       whOutToExport.sort((a, b) => {
         return a.createdAt - b.createdAt;
@@ -406,7 +405,6 @@ export default class WhOutOpService extends BaseCrudService
 
         if (errorLines.length === 0)
         {
-
           // Il n'y a pas d'erreur
           const chunkSize = 50;
           let totalProductImported = 0;

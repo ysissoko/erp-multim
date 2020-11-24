@@ -788,6 +788,8 @@ class Operation extends Component {
 
         if (delivery.type === "classic")
         {
+          let productsOutStock = [];
+
           if (delivery.cartonsOut)
           {
             delivery.cartonsOut.forEach((cartonOut) => {
@@ -798,34 +800,33 @@ class Operation extends Component {
               };
   
               cartonOut.productsOutClassic.forEach((productOutClassic) => {
-                const productOutStock = delivery.productsOutStock.find(productOutStock => productOutStock.id === productOutClassic.productOutStock.id);
-  
-                if (productOutStock)
+                productsOutStock.push(productOutClassic.productOutStock);
+
+                if (productOutClassic.productOutStock)
                 {
                   treeData.children.push({
-                    id: productOutStock.id,
-                    carton: productOutStock.cartonIn.refCode,
-                    place: productOutStock.cartonIn.place.refCode,
-                    product: productOutStock.product.refCode,
-                    quantityNeeded: productOutStock.quantityNeeded,
+                    id: productOutClassic.productOutStock.id,
+                    carton: productOutClassic.productOutStock.cartonIn.refCode,
+                    place: productOutClassic.productOutStock.cartonIn.place.refCode,
+                    product: productOutClassic.productOutStock.product.refCode,
+                    quantityNeeded: productOutClassic.productOutStock.quantityNeeded,
                     quantityScanned: productOutClassic.quantity
                   })
                 }
               })
-  
+
               selectedWhOutClassicProductListDetails.push(treeData);
             })
           }
-  
+
           // Affichage des products out classic sans cartons
-  
           let treeDataNotPlacedProducts = {
             id: -1,
             cartonOut: "A SCANNER",
             children: []
           };
 
-          delivery.productsOutStock
+          productsOutStock
           .filter(productOutStock => !productOutStock.scanned && productOutStock.quantityScanned != productOutStock.quantityNeeded)
           .map(productOutStock => {
               treeDataNotPlacedProducts.children.push({
@@ -837,7 +838,7 @@ class Operation extends Component {
               quantityScanned: productOutStock.quantityScanned
             })
           })
-          
+
           if (treeDataNotPlacedProducts.length > 0)
             selectedWhOutClassicProductListDetails.push(treeDataNotPlacedProducts);
 
