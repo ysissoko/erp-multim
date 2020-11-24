@@ -40,6 +40,64 @@ export default class ProductInService extends BaseCrudService
     return sortedProducts;
   }
 
+  exportStockToExcelFile()
+  {
+    return new Promise((resolve, reject) => {
+      this.readAll().then(response => {
+        let productsIn = response.data.map(productIn => ({  code: productIn.product.refCode,
+                                                            product: productIn.product.name,
+                                                            brand: productIn.product.brand.name,
+                                                            barcode: productIn.product.eanCode,
+                                                            carton: productIn.carton.refCode,
+                                                            place: productIn.carton.place.refCode,
+                                                            quantity: productIn.quantity
+                                                      }));
+  
+        const sheetName = "Wh out list";
+        const header = ["Référence",
+                        "Produit",
+                        "Marque",
+                        "Code Barre",
+                        "Carton",
+                        "Emplacement",
+                        "Quantité"];
+  
+        // Create the new excel workbook
+        let wb  = XLSX.utils.book_new();
+        wb.Props = {
+          Title: "Stock export",
+          Subject: "Stock export",
+          Author: "MULTI-M",
+          CreatedDate: new Date(Date.now())
+        };
+  
+        wb.SheetNames.push(sheetName);
+  
+        // Create the data array
+        let wsData = []
+        wsData[0] = header;
+    
+        this.sortAllProductsInStock(productsIn).forEach((productIn, idx) => {
+          wsData[idx + 1] = [
+            productIn.code,
+            productIn.product,
+            productIn.brand,
+            productIn.barcode,
+            productIn.carton,
+            productIn.place,
+            productIn.quantity]
+        })
+  
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        wb.Sheets[sheetName] = ws;
+        const wopts = { bookType:'xlsx', bookSST:false, type:'array' };
+        const wbout = XLSX.write(wb, wopts);
+        saveAs(new Blob([wbout],{type:"application/octet-stream"}), "export-stock.xlsx");
+        resolve("Stock exporté avec succès");
+      }).catch(e => reject(e));
+    });
+  }
+
   exportExcelFile(productsIn, sorted)
   {
     console.log("export excel file")

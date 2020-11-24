@@ -2,7 +2,7 @@ import React from 'react';
 import 'rsuite/lib/styles/index.less';
 import '../static/css/dataTable.less';
 
-import {Panel, Modal, IconButton, Icon, Drawer, Alert, FormGroup, RadioGroup, Radio, ControlLabel} from "rsuite";
+import {Panel, Modal, IconButton, Icon, Drawer, Alert, FormGroup, RadioGroup, Radio, ControlLabel, Button, FlexboxGrid, Notification} from "rsuite";
 
 import Frame from '../components/_shared/frame';
 import HeaderTitle from '../components/_shared/headerTitle';
@@ -40,6 +40,7 @@ import {ProductInService, WhMovOpService, CartonInService, CartonOutService} fro
 import CartonHistoriqueDrawer from '../components/modal/cartonHistoriqueDrawer';
 import {getFormattedDate} from "../utils/date";
 import {getToken} from "../utils/token"
+import PlaceholderParagraph from 'rsuite/lib/Placeholder/PlaceholderParagraph';
 class Stock extends React.Component {
 
   constructor(props)
@@ -243,8 +244,29 @@ class Stock extends React.Component {
 
   exportProductIn()
   {
-    console.log("Export product in")
     this.productInService.exportExcelFile(this.state.productList.filter(product => this.state.checkedKeys.indexOf(product.id) !== -1));
+  }
+
+  // affichage d'une notification
+ open(funcName, txt, title) {
+    Notification[funcName]({
+      title: title,
+      description: txt
+    });
+  }
+
+  /**
+   * export de tous les products in d'un coup
+   */
+  exportStock()
+  {
+    this.setState((prevState) => ({...prevState, loading: true}));
+    this.productInService.exportStockToExcelFile().then(msg => {
+      this.open('success', 'Stock exporté avec succès', 'Export OK')
+      this.setState((prevState) => ({...prevState, loading: false}));
+    }).catch(e => {
+      this.open('error', "Une erreur est survenue lors de l'export", 'Erreur export')  
+    })
   }
 
   updateWhMovList(pages)
@@ -734,11 +756,11 @@ sortData = (data) => {
 
     return (
         <Frame activeKey="2">
-          <HeaderTitle
-            className="header-frame"
-            title="Gestion du Stock"
-            subtitle="Les différentes catégories pour gérer le stock dans l’entrepôt"
-          />
+              <HeaderTitle
+                className="header-frame"
+                title="Gestion du Stock"
+                subtitle="Les différentes catégories pour gérer le stock dans l’entrepôt"
+              />
               <Panel>
               <div style={{display: 'flex'}}>
                 <NavBar
@@ -760,13 +782,24 @@ sortData = (data) => {
                    {(indeterminate || checked) && (
                      <>
                      <IconButton
-                     style={{marginTop: '20px', marginRight:'10px'}}
-                     className="inner-right"
-                     color="violet"
-                     icon={<Icon icon="file-excel-o" />}
-                     appearance="primary"
-                     onClick={() => this.exportProductIn()}
+                      style={{marginTop: '20px', marginRight:'10px'}}
+                      className="inner-right"
+                      color="violet"
+                      icon={<Icon icon="file-excel-o" />}
+                      
+                      appearance="primary"
+                      onClick={() => this.exportProductIn()}
                     />
+
+                    <IconButton
+                      style={{marginTop: '20px', marginRight:'10px'}}
+                      className="inner-right"
+                      color="red"
+                      icon={<Icon icon="archive" />}
+                      appearance="primary"
+                      onClick={() => this.exportStock()}
+                    />
+
                     <IconButton
                       style={{marginTop: '20px', marginRight:'5px'}}
                       className="inner-right"
@@ -777,14 +810,13 @@ sortData = (data) => {
                     />
                     </>)}
                 </div>
-
                 <CustomFilter
                   placeholder="Rechercher par produit, place, carton..."
                   onInputChange={this.onProductsInputChange}
                   value={this.state.productsAutocompleteFilter}
                   onSearchClick={this.refreshProductInStock}
                 />
-
+                
                 <FormGroup controlId="radioList">
                   <ControlLabel>Filtrer par: </ControlLabel>
                   <RadioGroup value={this.state.productInFilterType}  name="radioList" onChange={(v) => this.setState(prevState => ({...prevState, productInFilterType: v}))} inline>
@@ -916,7 +948,8 @@ sortData = (data) => {
                     primaryButton="Télécharger"
                     onCartonHistorique={() => this.toggleDrawer('right')}
                   />
-                  {/* TO DO CHANGE DATA */}
+                  
+
                   <HeaderTitleCarton
                     style={{paddingTop: '0px !important'}}
                     className="table-toolbar header-tag"
@@ -1083,6 +1116,7 @@ sortData = (data) => {
                       subtitle={"Visualiser les changements d’emplacements des cartons."}
                     />
                 </div>
+
                 <CustomFilter
                   placeholder="Rechercher par whmov, carton, place..."
                   onInputChange={this.onHistoryInputChange}
