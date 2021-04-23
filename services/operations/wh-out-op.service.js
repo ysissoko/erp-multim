@@ -64,7 +64,7 @@ export default class WhOutOpService extends BaseCrudService
     console.log("export classic whout");
     // Récupération des détails ddu  whout classic
 
-    const result = await getWhoutClassicInfo();
+    const result = await Axios.get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${this._baseUrl}/classic/${whOutClassic.refCode}/info`, this._headers);
     const whOutClassicToExport = result.data;
 
     const sheetName = "Wh out classic";

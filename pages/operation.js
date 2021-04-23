@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import 'rsuite/lib/styles/index.less';
 import '../static/css/dataTable.less';
 
-import {Panel, Modal, IconButton, Icon, Loader, Alert, FormGroup, ControlLabel, Radio, RadioGroup} from "rsuite";
+import {Panel, Modal, IconButton, Icon, Progress, Alert, FormGroup, ControlLabel, Radio, RadioGroup} from "rsuite";
 
 import Frame from '../components/_shared/frame'
 import HeaderTitle from '../components/_shared/headerTitle'
@@ -52,6 +52,11 @@ import { getToken}  from "../utils/token"
 import {getPaginatedData} from '../utils/pagination'
 import {exportWhOutToPdf} from "../utils/whout-export-pdf"
 
+const style = {
+  width: 120,
+  display: 'inline-block',
+  marginRight: 10
+};
 class Operation extends Component {
 
   constructor(props)
@@ -923,8 +928,6 @@ class Operation extends Component {
     const {active, checkedKeys, onRowClicked } = this.state;
     const currentNav = this.state.active
 
-   // console.log(treeData)
-
     //CHECKKOX
     let checked = false;
     let indeterminate = false;
@@ -1088,7 +1091,7 @@ class Operation extends Component {
                       title={"Bon de Préparation"}
                       subtitle={"Visualiser les cartons contenant les produits stockés dans l’entrepôt"}
                     />
-                 {( !indeterminate && !checked) && (
+                 {(!indeterminate && !checked) && (
                   <>
                   <Toolbar
                     primaryButton="Bon de Préparation"
@@ -1358,9 +1361,6 @@ class Operation extends Component {
                 handleDeliveryTypeChange={this.handleDeliveryTypeChange}
                 disabled={this.state.importInProgress || !this.state.activeButton}
               />
-            {this.state.onLoading && (
-              <Loader vertical backdrop center speed="fast" size="md" content="Medium" content="loading..."/>
-            )}
             </Modal>
           </div>
 
